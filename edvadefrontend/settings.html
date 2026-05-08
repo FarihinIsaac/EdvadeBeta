@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Edvade | Settings</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <script src="js/loadHeader.js"></script>
+  <div id="sidebarMount"></div>
+  <script src="js/loadSidebar.js"></script>
+
+  <main class="page">
+    <div class="settings-wrap">
+      <div class="card settings-card">
+        <div class="row space settings-title">
+          <h2 class="section-title m0">Settings</h2>
+          <span class="pill" id="saveState">Saved</span>
+        </div>
+
+        <!-- Appearance -->
+        <section class="panel">
+          <div class="panel-head">
+            <h3 class="m0">Appearance</h3>
+            <span class="chip">Theme</span>
+          </div>
+
+          <label class="switch-row">
+            <span>
+              <b>Dark theme</b>
+              <div class="muted small">Reduce glare at night</div>
+            </span>
+
+            <label class="switch">
+              <input id="themeToggle" type="checkbox" />
+              <span class="slider"></span>
+            </label>
+          </label>
+        </section>
+
+        <!-- Notifications -->
+        <section class="panel">
+          <div class="panel-head">
+            <h3 class="m0">Notifications</h3>
+            <span class="chip">Alerts</span>
+          </div>
+
+          <div class="check-grid">
+            <label class="check">
+              <input id="notifyEmail" type="checkbox" />
+              <span>Email notifications</span>
+            </label>
+
+            <label class="check">
+              <input id="notifyPush" type="checkbox" />
+              <span>Push notifications</span>
+            </label>
+          </div>
+        </section>
+
+        <!-- Account -->
+        <section class="panel">
+          <div class="panel-head">
+            <h3 class="m0">Account</h3>
+            <span class="chip">Preferences</span>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <label class="lbl" for="language">Language</label>
+              <select id="language" class="input">
+                <option value="en">English</option>
+                <option value="ms">Bahasa Melayu</option>
+                <option value="zh">中文</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="lbl" for="timezone">Timezone</label>
+              <select id="timezone" class="input">
+                <option value="UTC">UTC</option>
+                <option value="Asia/Kuala_Lumpur">Asia/Kuala_Lumpur (MYT)</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- Change Password -->
+        <section class="panel">
+          <div class="panel-head">
+            <h3 class="m0">Change Password</h3>
+            <span class="chip">Security</  
+span>
+          </div>
+
+          <form id="pwForm" class="grid-2" autocomplete="on">
+            <div>
+              <label class="lbl" for="currentPw">Current password</label>
+              <input id="currentPw" type="password" class="input" placeholder="••••••••" />
+            </div>
+
+            <div>
+              <label class="lbl" for="newPw">New password</label>
+              <input id="newPw" type="password" class="input" placeholder="At least 6 characters" />
+            </div>
+
+            <div>
+              <label class="lbl" for="newPw2">Confirm new password</label>
+              <input id="newPw2" type="password" class="input" placeholder="Repeat new password" />
+            </div>
+
+            <div class="pw-actions">
+              <button class="btn" type="submit">Change Password</button>
+              <div class="muted small" id="pwHint"></div>
+            </div>
+          </form>
+        </section>
+
+        <!-- Danger Zone -->
+        <section class="panel danger">
+          <div class="panel-head">
+            <h3 class="m0">Danger Zone</h3>
+            <span class="chip danger-chip">Irreversible</span>
+          </div>
+          <p class="muted small">Deleting your account permanently removes your data.</p>
+          <button id="deleteAccount" class="btn danger-btn" type="button">Delete Account</button>
+        </section>
+
+        <div class="actions">
+          <button id="resetSettings" class="btn ghost" type="button">Reset</button>
+          <button id="saveSettings" class="btn" type="button">Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/auth.js"></script>
+  <script src="js/settings.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edvade | Quiz</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+<script src="js/loadHeader.js" defer></script>
+  <script src="js/loadSidebar.js" defer></script>
+  
+  <div class="page">
+    <h2 id="modTitle">Quiz</h2>
+
+    <div id="quizBox"></div>
+
+    <div class="panel">
+  <h2 id="modTitle">Quiz</h2>
+
+  <div id="quizBox"></div>
+
+  <button onclick="submitQuiz()" class="btn-mini" style="margin-top:16px;">
+    Submit Answers
+  </button>
+
+  <div id="result" style="margin-top:12px;font-weight:800;"></div>
+</div>
+
+
+  <script src="js/auth.js"></script>
+  <script>
+    // ✅ protect: must be logged in + student
+    requireAuth();
+    if (localStorage.getItem("role") !== "student") {
+      window.location.href = "index.html";
+    }
+  </script>
+
+  <script src="js/auth.js"></script>
+  <script src="js/levelup.js"></script>
+  <script src="js/quiz.js"></script>
+</body>
+</html>

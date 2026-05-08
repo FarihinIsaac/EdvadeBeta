@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edvade | Learning Content</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<script src="js/loadHeader.js"></script>
+<div id="sidebarMount"></div>
+<script src="js/loadSidebar.js"></script>
+
+<div class="app">
+  <main class="main">
+    <div class="panel">
+      <h2 id="moduleTitle" class="section-title">Loading...</h2>
+      <div id="moduleContent" class="posts"></div>
+
+      <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn-mini" onclick="goBack()">Back</button>
+        <button id="openPdfBtn" class="btn-mini" onclick="openPdf()">
+          Open PDF
+        </button>
+        <button id="startQuizBtn" class="btn-mini" onclick="startQuiz()" disabled>
+          Start Quiz
+        </button>
+      </div>
+
+      <div class="muted small" style="margin-top:10px;">
+        Scroll to the bottom to unlock the quiz.
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="js/auth.js"></script>
+<script>
+  // 🔐 Auth + role protection
+  requireAuth();
+  if (localStorage.getItem("role") !== "student") {
+    window.location.href = "index.html";
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const moduleId = params.get("moduleId"); // e.g. 11,12,13,14
+
+  // ✅ Put learning notes here (match your real module IDs)
+  const learningNotes = {
+    11: `
+      <div class="post">
+        <h3>Variables & Data Types</h3>
+        <p>A <b>variable</b> is a container that stores a value so we can reuse it later.</p>
+
+        <h4>Example (Java)</h4>
+        <pre>int age = 20;
+String name = "Ali";
+double price = 15.5;
+boolean isStudent = true;</pre>
+
+        <h4>Common Data Types</h4>
+        <ul>
+          <li><b>int</b> – whole numbers (10, -3)</li>
+          <li><b>double</b> – decimals (3.14)</li>
+          <li><b>char</b> – single character ('A')</li>
+          <li><b>String</b> – text ("Hello")</li>
+          <li><b>boolean</b> – true/false</li>
+        </ul>
+
+        <h4>Mini Practice</h4>
+        <ul>
+          <li>Create a variable for your age</li>
+          <li>Create a variable for your name</li>
+          <li>Create a variable to store price</li>
+        </ul>
+      </div>
+      <div style="height:40px;"></div>
+    `,
+
+    12: `
+      <div class="post">
+        <h3>If / Else (Decision Making)</h3>
+        <p>We use <b>if/else</b> to make decisions based on a condition.</p>
+
+        <h4>Example (Java)</h4>
+        <pre>int marks = 80;
+
+if (marks >= 50) {
+  System.out.println("Pass");
+} else {
+  System.out.println("Fail");
+}</pre>
+
+        <h4>Comparison Operators</h4>
+        <ul>
+          <li><b>==</b> equal to</li>
+          <li><b>!=</b> not equal to</li>
+          <li><b>&gt;</b> greater than</li>
+          <li><b>&lt;</b> less than</li>
+          <li><b>&gt;=</b> greater/equal</li>
+          <li><b>&lt;=</b> less/equal</li>
+        </ul>
+
+        <h4>Mini Practice</h4>
+        <p>Write an if/else statement that checks if <b>age</b> is 18 or above.</p>
+      </div>
+      <div style="height:40px;"></div>
+    `,
+
+    13: `
+      <div class="post">
+        <h3>Loops (Repetition)</h3>
+        <p>Loops repeat code automatically to avoid writing the same code many times.</p>
+
+        <h4>for loop</h4>
+        <pre>for (int i = 1; i <= 5; i++) {
+  System.out.println(i);
+}</pre>
+
+        <h4>while loop</h4>
+        <pre>int i = 1;
+while (i <= 5) {
+  System.out.println(i);
+  i++;
+}</pre>
+
+        <h4>Mini Practice</h4>
+        <ul>
+          <li>Print numbers 1 to 10 using a loop</li>
+          <li>Print even numbers from 2 to 20</li>
+        </ul>
+      </div>
+      <div style="height:40px;"></div>
+    `,
+
+    14: `
+      <div class="post">
+        <h3>OOP Basics</h3>
+        <p><b>OOP</b> (Object-Oriented Programming) organizes code using <b>classes</b> and <b>objects</b>.</p>
+
+        <h4>Class example</h4>
+        <pre>class Student {
+  String name;
+  int age;
+}</pre>
+
+        <h4>Create object</h4>
+        <pre>Student s1 = new Student();
+s1.name = "Ali";
+s1.age = 20;</pre>
+
+        <h4>4 Pillars (Overview)</h4>
+        <ul>
+          <li><b>Encapsulation</b> – keep data safe inside a class</li>
+          <li><b>Inheritance</b> – reuse code from another class</li>
+          <li><b>Polymorphism</b> – same method name, different behavior</li>
+          <li><b>Abstraction</b> – hide complex details</li>
+        </ul>
+
+        <h4>Mini Practice</h4>
+        <p>Create a class named <b>Car</b> with <b>brand</b> and <b>year</b>.</p>
+      </div>
+      <div style="height:40px;"></div>
+    `
+  };
+
+  function loadLearning() {
+    const titleEl = document.getElementById("moduleTitle");
+    const contentEl = document.getElementById("moduleContent");
+
+    // Set a nicer title (optional)
+    const titles = {
+      11: "Chapter 1: Variables & Data Types",
+      12: "Chapter 2: If / Else",
+      13: "Chapter 3: Loops",
+      14: "Chapter 4: OOP Basics"
+    };
+
+    titleEl.textContent = titles[moduleId] || "Learning Content";
+    contentEl.innerHTML = learningNotes[moduleId] || `<div class="empty">No learning content available for this module.</div>`;
+  }
+
+  function startQuiz() {
+    window.location.href = `quiz.html?moduleId=${moduleId}`;
+  }
+
+  function openPdf() {
+    if (!moduleId) {
+      return alert("PDF file not available for this module.");
+    }
+
+    const pdfPath = `pdfs/module-${moduleId}.pdf`;
+    window.open(pdfPath, "_blank");
+  }
+
+  function goBack() {
+    window.location.href = "student-module.html";
+  }
+
+  // Unlock quiz after scrolling to bottom
+  window.addEventListener("scroll", () => {
+    const atBottom =
+      window.innerHeight + window.scrollY >= document.body.offsetHeight - 5;
+    if (atBottom) {
+      document.getElementById("startQuizBtn").disabled = false;
+    }
+  });
+
+  loadLearning();
+</script>
+
+</body>
+</html>

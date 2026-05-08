@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edvade | Home</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <!-- Auto header -->
+  <script src="js/loadHeader.js"></script>
+
+  <!-- Auto sidebar -->
+  <div id="sidebarMount"></div>
+  <script src="js/loadSidebar.js"></script>
+
+  <!-- Page content -->
+  <main class="main">
+  <div class="home-shell centered">
+
+    <!-- ANNOUNCEMENT AT TOP (FULL WIDTH) -->
+    <div class="panel announcement-banner">
+      <div class="card-head">
+        <h2>📢 Important Announcement</h2>
+        <span class="chip">From Lecturer</span>
+      </div>
+      <div id="homeAnnouncementWidget" class="announcement-widget"></div>
+    </div>
+
+    <!-- MAIN BIG BOX (only Daily Quest inside) -->
+    <div class="panel daily-quest-box">
+      <h3 class="section-title">Daily Quest ⚔️</h3>
+      <input class="search" id="questSearch" placeholder="Search for any quiz league..." />
+      <div class="quest-grid" id="questGrid"></div>
+    </div>
+
+    <!-- OUTSIDE BOX (Daily Stats separate) -->
+    <div class="panel daily-stats-box outside-stats">
+      <h3 class="section-title">Daily Stats 🎯</h3>
+
+      <div class="stats-grid">
+        <div class="quest-card" style="cursor:default;">
+          <div class="quest-top">
+            <div>
+              <div class="quest-title">XP Earned Today</div>
+              <div class="quest-sub">Resets every day</div>
+            </div>
+            <div class="quest-chip" id="xpTodayChip">0 XP</div>
+          </div>
+          <div class="quest-bottom">
+            <span class="quest-status unlocked" id="xpTodayText">0</span>
+          </div>
+        </div>
+
+        <div class="quest-card" style="cursor:default;">
+          <div class="quest-top">
+            <div>
+              <div class="quest-title">Daily Streak</div>
+              <div class="quest-sub" id="streakMsg">Log in daily to keep it going 🔥</div>
+            </div>
+            <div class="quest-chip" id="streakChip">0 days</div>
+          </div>
+          <div class="quest-bottom">
+            <span class="quest-status unlocked" id="streakDays">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+
+  <!-- Auth first, then page logic -->
+  <script src="js/auth.js"></script>
+  <script src="js/levelup.js"></script>
+  <script src="js/announcements.js"></script>
+  <script src="js/home.js"></script>
+</body>
+<canvas id="bgWorld"></canvas>
+<script src="js/bgWorld.js"></script>
+</html>

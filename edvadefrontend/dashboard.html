@@ -1,0 +1,128 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edvade | Student Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <script src="js/loadHeader.js"></script>
+
+  <div id="sidebarMount"></div>
+  <script src="js/loadSidebar.js"></script>
+
+  <!-- IMPORTANT: put your page content inside .main -->
+  <main class="main">
+    <div class="centered">
+    <!-- Top hero (smaller, cleaner) -->
+    <section class="hero">
+      <div class="hero-text">
+        <h1>Student Dashboard</h1>
+        <p>Welcome back, <span id="studentName"></span> 👋</p>
+      </div>
+
+      <!-- quick stats -->
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-label">Level</div>
+          <div class="stat-value" id="level"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Points</div>
+          <div class="stat-value" id="points"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <!-- Learning progress -->
+      <div class="card">
+        <div class="card-head">
+          <h2>Learning Progress</h2>
+          <span class="chip">This week</span>
+        </div>
+
+        <div class="progress-list">
+          <div class="progress-item">
+            <div class="row">
+              <h3>Java Fundamentals</h3>
+              <span class="pct" id="fundamentalsPct">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress" id="fundamentals"></div>
+            </div>
+          </div>
+
+          <div class="progress-item">
+            <div class="row">
+              <h3>Control Flow</h3>
+              <span class="pct" id="controlFlowPct">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress" id="controlFlow"></div>
+            </div>
+          </div>
+
+          <div class="progress-item">
+            <div class="row">
+              <h3>Classes & Objects</h3>
+              <span class="pct" id="oopPct">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress" id="oop"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Achievements -->
+      <div class="card">
+        <div class="card-head">
+          <h2>Achievements</h2>
+          <span class="chip">Badges</span>
+        </div>
+
+        <div class="badge-grid badges">
+          <div class="badge locked" data-name="Java Starter">
+            <div class="badge-icon">🏁</div>
+            <div class="badge-info">
+              <div class="badge-title">Java Starter</div>
+              <div class="badge-sub">Complete Fundamentals</div>
+            </div>
+          </div>
+
+          <div class="badge locked" data-name="Quiz Master">
+            <div class="badge-icon">🧠</div>
+            <div class="badge-info">
+              <div class="badge-title">Quiz Master</div>
+              <div class="badge-sub">Score 80%+ on quizzes</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hint">
+          Locked badges will unlock automatically when you meet the requirement.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Announcements</h2>
+          <span class="chip">From lecturer</span>
+        </div>
+        <div id="announcementWidget" class="announcement-widget"></div>
+      </div>
+    </section>
+    </div>
+  </main>
+
+  <script src="js/auth.js"></script>
+  <script src="js/levelup.js"></script>
+  <script src="js/announcements.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+<canvas id="bgWorld"></canvas>
+<script src="js/bgWorld.js"></script>
+</html>

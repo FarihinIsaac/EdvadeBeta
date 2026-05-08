@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edvade | Leaderboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <script src="js/loadHeader.js"></script>
+  <div id="sidebarMount"></div>
+  <script src="js/loadSidebar.js"></script>
+
+  <main class="main">
+    <div class="page centered">
+      <div class="leaderboard-header">
+        <div>
+          <h1>Leaderboard</h1>
+          <p>Compete with other students, check your rank, and review your earned badges.</p>
+        </div>
+      </div>
+
+      <div class="leaderboard-content">
+        <div class="leaderboard-card leaderboard-main-card">
+          <div class="section-title">Top Students</div>
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Points</th>
+                <th>Level</th>
+                <th>Badges</th>
+              </tr>
+            </thead>
+            <tbody id="topStudentsBody">
+              <tr><td colspan="6" class="leaderboard-empty">Loading leaderboard...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="leaderboard-card leaderboard-side-card">
+          <div class="section-title">Your Performance</div>
+          <div class="performance-avatar-row">
+            <img id="myAvatar" class="leaderboard-self-avatar" src="https://via.placeholder.com/80?text=%F0%9F%91%A4" alt="Your profile picture">
+            <div>
+              <div class="performance-user-name" id="myName">Loading...</div>
+              <div class="muted small" id="myContact">Contact: -</div>
+            </div>
+          </div>
+          <div style="margin-top: 16px; display: grid; gap: 12px;">
+            <div><strong>Rank:</strong> <span id="myRank">-</span></div>
+            <div><strong>Points:</strong> <span id="myPoints">-</span></div>
+            <div><strong>Level:</strong> <span id="myLevel">-</span></div>
+          </div>
+          <div style="margin-top: 18px;">
+            <div class="section-title" style="font-size: 16px; margin-bottom: 10px;">Progress to next level</div>
+            <div class="leaderboard-progress-bar">
+              <div id="myXpProgress" class="leaderboard-progress-fill"></div>
+            </div>
+            <div class="muted small" id="myXpText">0 / 100 XP</div>
+          </div>
+          <div style="margin-top: 18px;">
+            <div class="section-title" style="font-size: 16px; margin-bottom: 10px;">Badges Earned</div>
+            <div id="myBadges" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/auth.js"></script>
+  <script src="js/leaderboard.js"></script>
+</body>
+</html>

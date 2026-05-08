@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edvade | Forum</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <script src="js/loadHeader.js"></script>
+  <div id="sidebarMount"></div>
+  <script src="js/loadSidebar.js"></script>
+
+  <div class="page centered">
+    <div class="forum-top">
+      <div>
+        <h2 class="forum-title">Discussion Forum</h2>
+        <div class="forum-sub">Ask questions, help friends, and react to posts.</div>
+      </div>
+      <div class="pill" id="rolePill"></div>
+    </div>
+
+    <div class="forum-grid">
+      <!-- Left: Module picker -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Choose Module</h3>
+          <select id="moduleSelect" class="select"></select>
+        </div>
+        <p class="muted">Select a module category to view posts.</p>
+
+        <div class="divider"></div>
+
+        <label class="label">Search</label>
+        <input id="search" class="input" placeholder="Search title..." />
+      </div>
+
+      <!-- Right: Create new post -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3>New Post</h3>
+          <span class="tag-soft">Tip: be specific ✨</span>
+        </div>
+
+        <div class="form">
+          <div>
+            <label class="label">Title</label>
+            <input id="postTitle" class="input" placeholder="e.g. Why does for-loop start at 0?" />
+          </div>
+
+          <div>
+            <label class="label">Message</label>
+            <textarea id="postBody" class="textarea" placeholder="Write your question here..."></textarea>
+          </div>
+
+          <div class="row space">
+            <div class="muted small" id="postHint"></div>
+            <button class="btn" id="btnPost" type="button">Post</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Posts list -->
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Posts</h3>
+        <span class="muted small" id="postsMeta"></span>
+      </div>
+      <div id="postsList" class="posts"></div>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/levelup.js"></script>
+  <script src="js/forum.js"></script>
+</body>
+<canvas id="bgWorld"></canvas>
+<script src="js/bgWorld.js"></script>
+</html>

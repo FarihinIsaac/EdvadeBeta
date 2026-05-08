@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Edvade | Login</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body class="auth-body">
+
+    <div class="auth-card">
+
+        <!-- LOGO -->
+        <img src="images/edvade-logo.png" alt="Edvade Logo" class="auth-logo" />
+
+        <!-- LOGIN TITLE -->
+        <h2 class="auth-subtitle">Login</h2>
+
+        <!-- EMAIL -->
+        <input
+            class="auth-input"
+            id="email"
+            type="email"
+            placeholder="Username"
+            required
+        />
+
+        <!-- PASSWORD -->
+        <input
+            class="auth-input"
+            id="password"
+            type="password"
+            placeholder="Password"
+            required
+        />
+        
+        <!-- LOGIN BUTTON (UPDATED FUNCTION) -->
+        <button class="auth-btn" type="button" onclick="login()">
+            Log in
+        </button>
+
+        <!-- LINKS -->
+        <div class="auth-links">
+            <a class="auth-link" href="register.html">Register</a>
+            </div>
+            <div class="auth-links"></div>
+            <a class="auth-link" href="#">Forgot Password?</a>
+        </div>
+
+    </div>
+
+    <script src="js/auth.js"></script>
+</body>
+<canvas id="bgWorld"></canvas>
+<script src="js/bgWorld.js"></script>
+</html>
+

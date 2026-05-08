@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edvade | Lecturer Reports</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="brand">Edvade (Lecturer)</div>
+    <div class="top-actions">
+      <button class="btn-ghost" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- App Layout -->
+  <div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar-lecturer">
+      <div class="sidebtn" onclick="location.href='lecturer-dashboard.html'">🏠</div>
+      <div class="sidebtn" onclick="location.href='lecturer-module.html'">📚</div>
+      <div class="sidebtn" onclick="location.href='lecturer-quiz.html'">🧪</div>
+      <div class="sidebtn" onclick="location.href='lecturer-reports.html'">📊</div>
+      <div class="sidebtn" onclick="logout()">🚪</div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <div class="panel">
+        <h2 class="section-title">Class Reports</h2>
+
+        <!-- Summary -->
+        <div class="card">
+          <h3 class="m0">Overall Summary</h3>
+          <div id="overallSummary" class="muted small" style="margin-top:10px;">Loading...</div>
+        </div>
+
+        <!-- Top students -->
+        <div class="card">
+          <h3 class="m0">Top Students (by points)</h3>
+          <div id="topStudents" class="posts" style="margin-top:10px;"></div>
+        </div>
+
+        <!-- Module stats + module picker -->
+        <div class="card">
+          <div class="row space">
+            <h3 class="m0">Module Performance</h3>
+            <select class="select" id="moduleSelect" style="max-width:320px;"></select>
+          </div>
+
+          <div id="moduleStats" class="muted small" style="margin-top:10px;"></div>
+
+          <hr style="border:none; height:1px; background:#e5e7eb; margin:14px 0;">
+
+          <h3 class="m0">Student Averages (Selected Module)</h3>
+          <div id="studentAvg" class="posts" style="margin-top:10px;"></div>
+
+          <hr style="border:none; height:1px; background:#e5e7eb; margin:14px 0;">
+
+          <h3 class="m0">Latest Attempts (Selected Module)</h3>
+          <div id="latestAttempts" class="posts" style="margin-top:10px;"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script>
+    // ✅ auth + role protection
+    requireAuth();
+    if (localStorage.getItem("role") !== "lecturer") window.location.href = "index.html";
+
+    async function apiFetch(path, options = {}) {
+      const token = localStorage.getItem("token");
+      const res = await fetch(API + path, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          ...(options.headers || {})
+        }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Request failed");
+      return data;
+    }
+
+    function esc(s) {
+      return String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    async function loadSummary() {
+      const overall = document.getElementById("overallSummary");
+      const top = document.getElementById("topStudents");
+      const modSelect = document.getElementById("moduleSelect");
+
+      try {
+        const data = await apiFetch("/lecturer/reports/summary");
+
+        overall.textContent =
+          `Students: ${data.totalStudents} • Attempts: ${data.totalAttempts} • Avg Score: ${data.avgScorePct}% • Avg Points: ${data.avgPoints}`;
+
+        // top students
+        if (!data.topStudents.length) {
+          top.innerHTML = `<div class="empty">No students yet.</div>`;
+        } else {
+          top.innerHTML = data.topStudents.map(s => `
+            <div class="post">
+              <div class="row space">
+                <div>
+                  <div class="post-title">${esc(s.name)} <span class="muted small">(${esc(s.email)})</span></div>
+                  <div class="muted small">Points: ${s.points} • Level: ${esc(s.level ?? "")}</div>
+                </div>
+              </div>
+            </div>
+          `).join("");
+        }
+
+        // module dropdown
+        const modules = data.moduleStats || [];
+        if (!modules.length) {
+          modSelect.innerHTML = `<option value="">No modules yet</option>`;
+          document.getElementById("moduleStats").textContent = "Create modules first.";
+          return;
+        }
+
+        modSelect.innerHTML = modules.map(m => `
+          <option value="${m.moduleId}">
+            ${m.moduleTitle} (Attempts: ${m.attempts}, Avg: ${m.avgScorePct}%)
+          </option>
+        `).join("");
+
+        // load first module report by default
+        await loadModuleReport(modSelect.value);
+
+      } catch (e) {
+        overall.textContent = "Error: " + e.message;
+        top.innerHTML = `<div class="empty">Error loading.</div>`;
+      }
+    }
+
+    async function loadModuleReport(moduleId) {
+      const stats = document.getElementById("moduleStats");
+      const studentAvg = document.getElementById("studentAvg");
+      const latest = document.getElementById("latestAttempts");
+
+      if (!moduleId) return;
+
+      stats.textContent = "Loading module report...";
+      studentAvg.innerHTML = "";
+      latest.innerHTML = "";
+
+      try {
+        const data = await apiFetch(`/lecturer/reports/module/${moduleId}`);
+
+        const s = data.summary;
+        stats.textContent =
+          `Module: ${data.module.title} • Attempts: ${s.attempts} • Avg Score: ${s.avgScorePct}% • Best Score: ${s.bestScore}/${s.totalQ}`;
+
+        // student averages
+        if (!data.studentAverages.length) {
+          studentAvg.innerHTML = `<div class="empty">No attempts yet for this module.</div>`;
+        } else {
+          studentAvg.innerHTML = data.studentAverages.map(r => `
+            <div class="post">
+              <div class="row space">
+                <div>
+                  <div class="post-title">${esc(r.name)} <span class="muted small">(${esc(r.email)})</span></div>
+                  <div class="muted small">Attempts: ${r.attempts} • Avg Score: ${r.avgScorePct}%</div>
+                </div>
+              </div>
+            </div>
+          `).join("");
+        }
+
+        // latest attempts
+        if (!data.latestAttempts.length) {
+          latest.innerHTML = `<div class="empty">No attempts yet for this module.</div>`;
+        } else {
+          latest.innerHTML = data.latestAttempts.map(a => `
+            <div class="post">
+              <div class="row space">
+                <div>
+                  <div class="post-title">${esc(a.name)} <span class="muted small">(${esc(a.email)})</span></div>
+                  <div class="muted small">Score: ${a.score}/${a.total} • ${esc(a.created_at)}</div>
+                </div>
+              </div>
+            </div>
+          `).join("");
+        }
+
+      } catch (e) {
+        stats.textContent = "Error: " + e.message;
+        studentAvg.innerHTML = `<div class="empty">Failed to load module report.</div>`;
+        latest.innerHTML = `<div class="empty">Failed to load module report.</div>`;
+      }
+    }
+
+    document.getElementById("moduleSelect").addEventListener("change", (e) => {
+      loadModuleReport(e.target.value);
+    });
+
+    loadSummary();
+  </script>
+</body>
+</html>

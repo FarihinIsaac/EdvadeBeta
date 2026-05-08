@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Edvade | Lecturer Module</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="brand">Edvade (Lecturer)</div>
+    <div class="top-actions">
+      <button class="btn-ghost" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- App Layout -->
+  <div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar-lecturer">
+      <div class="sidebtn" onclick="location.href='lecturer-dashboard.html'">🏠</div>
+      <div class="sidebtn active" onclick="location.href='lecturer-module.html'">📚</div>
+      <div class="sidebtn" onclick="location.href='lecturer-quiz.html'">🧪</div>
+      <div class="sidebtn" onclick="location.href='lecturer-reports.html'">📊</div>
+      <div class="sidebtn" onclick="logout()">🚪</div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <div class="panel">
+        <div class="row space" style="align-items:flex-end;">
+          <div>
+            <h2 class="section-title">Lecturer Module</h2>
+            <p class="muted" style="margin-top:-6px;">Create, edit and delete modules for students.</p>
+          </div>
+          <div class="pill">Manage content</div>
+        </div>
+
+        <div class="row gap" style="align-items:stretch;">
+          <!-- Create Module -->
+          <div class="card grow">
+            <div class="row space">
+              <h3 class="m0">Create Module</h3>
+              <div class="tag">Tip: keep titles consistent</div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="label">Title</label>
+                <input class="input" id="modTitle" placeholder="Chapter 1: Variables & Data Types" />
+              </div>
+
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="label">Unlock points</label>
+                <input class="input" id="modUnlock" type="number" min="0" step="1" value="0" />
+              </div>
+
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="label">Order</label>
+                <input class="input" id="modOrder" type="number" min="1" step="1" placeholder="Auto" />
+              </div>
+
+              <div class="form-group" style="grid-column:1 / -1;">
+                <label class="label">Description</label>
+                <textarea class="textarea" id="modDesc" placeholder="Basics of Java variables..."></textarea>
+              </div>
+            </div>
+
+            <div class="row space" style="margin-top:10px;">
+              <div id="moduleHint" class="muted small"></div>
+              <button class="btn" id="addModuleBtn" type="button">Add Module</button>
+            </div>
+          </div>
+
+          <!-- Modules list -->
+          <div class="card grow">
+            <div class="row space">
+              <h3 class="m0">Modules</h3>
+              <input id="moduleSearch" class="input" placeholder="Search module..." style="max-width:260px;" />
+            </div>
+
+            <div id="moduleList" class="posts" style="margin-top:10px;"></div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/lecturer-module.js"></script>
+</body>
+</html>

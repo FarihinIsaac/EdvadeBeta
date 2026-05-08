@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edvade | Learning Modules</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+<script src="js/loadHeader.js"></script>
+<div id="sidebarMount"></div>
+<script src="js/loadSidebar.js"></script>
+  <!-- App Layout -->
+  <div class="app">
+
+    <!-- Main Content -->
+    <main class="main">
+      <div class="panel centered">
+        <h2 class="section-title">Learning Modules</h2>
+        <div id="moduleList" class="posts"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/levelup.js"></script>
+
+  <script>
+    // 🔐 Auth + role protection
+    requireAuth();
+    if (localStorage.getItem("role") !== "student") {
+      window.location.href = "index.html";
+    }
+
+
+    async function apiFetch(path) {
+      const token = localStorage.getItem("token");
+      const res = await fetch(API + path, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Error");
+      return data;
+    }
+
+    async function loadModules() {
+      const container = document.getElementById("moduleList");
+
+      try {
+        const modules = await apiFetch("/modules");
+
+        if (modules.length === 0) {
+          container.innerHTML = `<div class="empty">No modules available yet.</div>`;
+          return;
+        }
+
+container.innerHTML = modules.map(m => `
+  <div class="post ${m.unlocked ? "" : "locked"}">
+    <div class="row space">
+      <div>
+        <div class="post-title">${m.title}</div>
+        <div class="muted small">${m.description || ""}</div>
+        <div class="muted small">Unlock Points: ${m.unlock_points}</div>
+      </div>
+
+      ${
+        m.unlocked
+          ? `<button class="btn-mini" onclick="openModule(${m.id})">Start</button>`
+          : `<span class="quest-status locked">Locked 🔒</span>`
+      }
+    </div>
+  </div>
+`).join("");
+
+
+      } catch (err) {
+        container.innerHTML = `<div class="empty">Error loading modules</div>`;
+      }
+    }
+
+function openModule(id) {
+  window.location.href = `learning.html?moduleId=${id}`;
+}
+
+    loadModules();
+  </script>
+
+</body>
+<canvas id="bgWorld"></canvas>
+<script src="js/bgWorld.js"></script>
+</html>

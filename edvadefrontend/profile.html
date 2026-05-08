@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Profile</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <script src="js/loadHeader.js"></script>
+
+  <div id="sidebarMount"></div>
+  <script src="js/loadSidebar.js"></script>
+
+  <main class="main">
+    <div class="panel profile-panel centered">
+      <div class="profile-head">
+        <div class="profile-title-wrap">
+          <h1 id="displayName" class="profile-title">Student Profile</h1>
+          <p id="displayEmail" class="profile-sub muted"></p>
+        </div>
+
+        <div class="profile-avatar">
+          <img id="profilePicPreview"
+               src="https://via.placeholder.com/120"
+               alt="Profile Picture"
+               class="profile-pic" />
+          <div class="avatar-tag">Avatar</div>
+        </div>
+      </div>
+
+      <form id="profileForm" class="profile-form">
+        <div class="profile-grid">
+          <!-- Left column -->
+          <section class="profile-card">
+            <h3 class="profile-card-title">Basic Info</h3>
+
+            <div class="form-group">
+              <label for="profilePic">Profile Picture URL</label>
+              <input type="url" id="profilePic" name="profilePic" placeholder="https://..." />
+              <div class="field-hint">Paste an image link and your avatar will update.</div>
+            </div>
+
+            <div class="form-group">
+              <label for="fullName">Full Name</label>
+              <input type="text" id="fullName" name="fullName" required />
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" required />
+            </div>
+
+            <div class="form-group">
+              <label for="studentId">Student ID</label>
+              <input type="text" id="studentId" name="studentId" readonly />
+            </div>
+          </section>
+
+          <!-- Right column -->
+          <section class="profile-card">
+            <h3 class="profile-card-title">More Details</h3>
+
+            <div class="form-group">
+              <label for="program">Program</label>
+              <select id="program" name="program">
+                <option value="">-- Select program --</option>
+                <option value="CS">Computer Science</option>
+                <option value="IT">Information Technology</option>
+                <option value="SE">Software Engineering</option>
+                <option value="DS">Data Science</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="bio">Bio</label>
+              <textarea id="bio" name="bio" rows="4" placeholder="Tell us about yourself..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input type="tel" id="phone" name="phone" placeholder="e.g. 012-3456789" />
+            </div>
+
+            <div class="button-group">
+              <button type="submit" class="btn-game">💾 Save Changes</button>
+              <button type="reset" class="btn-game ghost">↩ Reset</button>
+            </div>
+          </section>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="js/auth.js"></script>
+  <script src="js/profile.js"></script>
+</body>
+<canvas id="bgWorld"></canvas>
+<script src="js/bgWorld.js"></script>
+</html>

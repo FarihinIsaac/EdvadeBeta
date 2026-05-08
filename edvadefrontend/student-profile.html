@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edvade | Student Profile</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <script src="js/loadHeader.js"></script>
+  <div id="sidebarMount"></div>
+  <script src="js/loadSidebar.js"></script>
+
+  <main class="main">
+    <div class="page centered">
+      <div class="leaderboard-card" style="max-width: 800px; margin: 0 auto;">
+        <div class="leaderboard-header">
+          <div>
+            <h1>Student Profile</h1>
+            <p>View student contact information, points, and badges.</p>
+          </div>
+          <div>
+            <button class="btn-mini" onclick="window.history.back()">Back</button>
+          </div>
+        </div>
+
+        <div style="display:grid; gap:18px;">
+          <div style="display:grid; gap:12px;">
+            <div><strong>Name:</strong> <span id="profileName">Loading...</span></div>
+            <div><strong>Email:</strong> <span id="profileEmail">-</span></div>
+            <div><strong>Mobile:</strong> <span id="profileMobile">-</span></div>
+            <div><strong>Points:</strong> <span id="profilePoints">-</span></div>
+            <div><strong>Level:</strong> <span id="profileLevel">-</span></div>
+            <div><strong>Rank:</strong> <span id="profileRank">-</span></div>
+            <div><strong>Attempts:</strong> <span id="profileAttempts">-</span></div>
+          </div>
+
+          <div>
+            <div class="section-title" style="font-size: 16px; margin-bottom: 10px;">Badges</div>
+            <div id="profileBadges" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/auth.js"></script>
+  <script src="js/student-profile.js"></script>
+</body>
+</html>

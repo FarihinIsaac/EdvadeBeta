@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edvade | Lecturer Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="brand">Edvade (Lecturer)</div>
+    <div class="top-actions">
+      <button class="btn-ghost" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- App Layout -->
+  <div class="app">
+    <!-- Sidebar -->
+<div class="sidebar-lecturer">
+  <div class="sidebtn" onclick="location.href='lecturer-dashboard.html'">🏠</div>
+  <div class="sidebtn" onclick="location.href='lecturer-module.html'">📚</div>
+
+
+  <!-- ✅ ADD THESE -->
+  <div class="sidebtn" onclick="location.href='lecturer-quiz.html'">🧪</div>
+  <div class="sidebtn" onclick="location.href='lecturer-reports.html'">📊</div>
+
+  <div class="sidebtn" onclick="logout()">🚪</div>
+</div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <div class="panel">
+        <h2 class="section-title">Lecturer Dashboard</h2>
+
+        <div class="card">
+          <h3 class="m0">Quick Actions</h3>
+          <p class="muted small">Manage your teaching content and view class progress.</p>
+
+          <div class="row gap">
+            <button class="btn" onclick="location.href='lecturer-module.html'">Manage Modules</button>
+            <button class="btn" onclick="location.href='lecturer-reports.html'">View Class Progress</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>Send Announcement</h2>
+            <span class="chip">Student view</span>
+          </div>
+          <form id="announcementForm" class="form">
+            <label class="label" for="announcementTitle">Title</label>
+            <input id="announcementTitle" class="input" placeholder="Class update, deadline, or reminder" />
+            <label class="label" for="announcementMessage">Message</label>
+            <textarea id="announcementMessage" class="textarea" placeholder="Type the announcement for students here..."></textarea>
+            <button type="submit" class="btn">Publish Announcement</button>
+            <span id="announcementStatus" class="muted small"></span>
+          </form>
+          <div class="divider"></div>
+          <div id="currentAnnouncement" class="announcement-widget"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/announcements.js"></script>
+  <script>
+    (async () => {
+      if (localStorage.getItem("role") !== "lecturer") {
+        window.location.href = "index.html";
+      }
+      await initAnnouncementEditor(
+        "announcementForm",
+        "announcementTitle",
+        "announcementMessage",
+        "announcementStatus",
+        "currentAnnouncement"
+      );
+    })();
+  </script>
+</body>
+</html>

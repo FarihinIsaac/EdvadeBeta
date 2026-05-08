@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edvade | Lecturer Quiz</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="brand">Edvade (Lecturer)</div>
+    <div class="top-actions">
+      <button class="btn-ghost" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- App Layout -->
+  <div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar-lecturer">
+      <div class="sidebtn" onclick="location.href='lecturer-dashboard.html'">🏠</div>
+      <div class="sidebtn" onclick="location.href='lecturer-module.html'">📚</div>
+      <div class="sidebtn" onclick="location.href='lecturer-quiz.html'">🧪</div>
+      <div class="sidebtn" onclick="location.href='lecturer-reports.html'">📊</div>
+      <div class="sidebtn" onclick="logout()">🚪</div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main">
+      <div class="panel">
+        <h2 class="section-title">Create Quiz (DB)</h2>
+
+        <!-- Select Module + Add Question -->
+        <div class="card">
+          <h3 class="m0">Select Module</h3>
+          <p class="muted small">This page now uses MySQL. Questions are saved to the DB under the selected module.</p>
+
+          <!-- Module dropdown -->
+          <select class="select" id="moduleSelect" style="margin-top:10px;"></select>
+
+          <div id="moduleHint" class="muted small" style="margin-top:10px;"></div>
+
+          <hr style="border:none; height:1px; background:#e5e7eb; margin:14px 0;">
+
+          <h3 class="m0">Add Question</h3>
+          <input class="input" id="qText" placeholder="Question (e.g., What is an object?)" />
+
+          <div class="row gap" style="margin-top:10px;">
+            <input class="input" id="optA" placeholder="Option A" />
+            <input class="input" id="optB" placeholder="Option B" />
+          </div>
+          <div class="row gap" style="margin-top:10px;">
+            <input class="input" id="optC" placeholder="Option C" />
+            <input class="input" id="optD" placeholder="Option D" />
+          </div>
+
+          <select class="select" id="correctOpt" style="margin-top:10px;">
+            <option value="">Correct Answer</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+          </select>
+
+          <button class="btn" style="margin-top:12px;" onclick="addQuestion()">Add Question (DB)</button>
+        </div>
+
+        <!-- Question List -->
+        <div class="card">
+          <h3 class="m0">Questions in Selected Module</h3>
+          <div id="questionList" class="posts"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Auth + role protection -->
+  <script src="js/auth.js"></script>
+  <script>
+    // ✅ Must be logged in + lecturer only
+    requireAuth();
+    if (localStorage.getItem("role") !== "lecturer") window.location.href = "index.html";
+
+    async function apiFetch(path, options = {}) {
+      const token = localStorage.getItem("token");
+      const res = await fetch(API + path, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          ...(options.headers || {})
+        }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Request failed");
+      return data;
+    }
+
+    // ---------- MODULES ----------
+    async function loadModules() {
+      const select = document.getElementById("moduleSelect");
+      const hint = document.getElementById("moduleHint");
+
+      try {
+        const modules = await apiFetch("/lecturer/modules");
+
+        if (modules.length === 0) {
+          select.innerHTML = `<option value="">No modules yet</option>`;
+          hint.textContent = "Create a module first in Lecturer Module page (📚).";
+          renderQuestions([]);
+          return;
+        }
+
+select.innerHTML =
+  `<option value="">-- Select Module --</option>` +
+  modules.map(m => `
+    <option value="${m.id}">${m.title}</option>
+  `).join("");
+
+        hint.textContent = "Selected module will receive new questions.";
+        await loadQuestionsForSelected();
+
+      } catch (e) {
+        select.innerHTML = `<option value="">Error</option>`;
+        hint.textContent = "Error loading modules: " + e.message;
+      }
+    }
+
+    document.getElementById("moduleSelect").addEventListener("change", loadQuestionsForSelected);
+
+    // ---------- QUESTIONS ----------
+    async function loadQuestionsForSelected() {
+      const moduleId = document.getElementById("moduleSelect").value;
+      if (!moduleId) {
+        renderQuestions([]);
+        return;
+      }
+
+      try {
+        const qs = await apiFetch(`/lecturer/modules/${moduleId}/questions`);
+        renderQuestions(qs);
+      } catch (e) {
+        renderQuestions([]);
+        document.getElementById("questionList").innerHTML =
+          `<div class="empty">Error loading questions: ${e.message}</div>`;
+      }
+    }
+
+    function renderQuestions(qs) {
+      const list = document.getElementById("questionList");
+
+      if (!qs || qs.length === 0) {
+        list.innerHTML = `<div class="empty">No questions yet for this module. Add one above.</div>`;
+        return;
+      }
+
+      list.innerHTML = qs.map(q => `
+        <div class="post">
+          <div class="row space">
+            <div class="post-title">${escapeHtml(q.prompt)}</div>
+            <button class="btn-mini" onclick="deleteQuestion(${q.id})">Delete</button>
+          </div>
+          <div class="post-body">
+            <div class="muted small">
+              A) ${escapeHtml(q.a)}<br/>
+              B) ${escapeHtml(q.b)}<br/>
+              C) ${escapeHtml(q.c)}<br/>
+              D) ${escapeHtml(q.d)}<br/>
+              <b>Correct:</b> ${escapeHtml(q.correct)}
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function addQuestion() {
+      const moduleId = document.getElementById("moduleSelect").value;
+      if (!moduleId) return alert("Please create/select a module first.");
+
+      const prompt = document.getElementById("qText").value.trim();
+      const a = document.getElementById("optA").value.trim();
+      const b = document.getElementById("optB").value.trim();
+      const c = document.getElementById("optC").value.trim();
+      const d = document.getElementById("optD").value.trim();
+      const correct = document.getElementById("correctOpt").value;
+
+      if (!prompt || !a || !b || !c || !d || !correct) {
+        alert("Please fill question + 4 options + correct answer.");
+        return;
+      }
+
+      try {
+        await apiFetch(`/lecturer/modules/${moduleId}/questions`, {
+          method: "POST",
+          body: JSON.stringify({ prompt, a, b, c, d, correct })
+        });
+
+        // clear inputs
+        document.getElementById("qText").value = "";
+        document.getElementById("optA").value = "";
+        document.getElementById("optB").value = "";
+        document.getElementById("optC").value = "";
+        document.getElementById("optD").value = "";
+        document.getElementById("correctOpt").value = "";
+
+        await loadQuestionsForSelected();
+        alert("Question saved to DB ✅");
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function deleteQuestion(id) {
+      if (!confirm("Delete this question?")) return;
+      try {
+        await apiFetch(`/lecturer/questions/${id}`, { method: "DELETE" });
+        await loadQuestionsForSelected();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    // basic XSS-safe text display
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    loadModules();
+  </script>
+</body>
+</html>
