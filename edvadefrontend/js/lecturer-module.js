@@ -2,8 +2,6 @@
 
 requireAuth();
 
-const API_BASE = (typeof API !== "undefined" && API) ? API : "http://localhost:3000/api";
-
 const user = JSON.parse(localStorage.getItem("user") || "{}");
 const role = user.role || localStorage.getItem("role");
 if (role !== "lecturer") window.location.href = "index.html";
@@ -38,7 +36,7 @@ async function apiFetch(path, options = {}) {
 
   // IMPORTANT: if your frontend is running on 127.0.0.1, still call API using localhost
   // Keep consistent to avoid CORS/token confusion.
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${window.API}${path}`, {
     method: options.method || "GET",
     headers: {
       "Content-Type": "application/json",

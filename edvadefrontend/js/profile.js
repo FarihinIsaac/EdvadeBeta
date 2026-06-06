@@ -1,5 +1,4 @@
-// Simple profile loader/saver
-const API = 'http://localhost:3000/api';
+// Simple profile loader/saver (API set by config.js)
 const token = localStorage.getItem('token');
 
 if (!token) {
@@ -10,7 +9,7 @@ if (!token) {
 function byId(id){ return document.getElementById(id); }
 
 async function apiGet(path) {
-  const res = await fetch(`${API}${path}`, {
+  const res = await fetch(`${window.API}${path}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   const data = await res.json().catch(() => ({}));
@@ -70,7 +69,7 @@ async function loadProfile() {
 
 async function saveProfile(payload) {
   try {
-    const res = await fetch(`${API}/profile`, {
+    const res = await fetch(`${window.API}/profile`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

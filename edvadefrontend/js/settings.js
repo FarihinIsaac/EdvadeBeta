@@ -1,6 +1,5 @@
 requireAuth();
 
-const API_BASE = typeof API !== "undefined" ? API : "http://localhost:3000/api";
 const token = localStorage.getItem("token");
 
 const $ = (id) => document.getElementById(id);
@@ -14,7 +13,7 @@ function setSaveState(text, kind = "ok") {
 }
 
 async function apiFetch(path, options = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${window.API}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",

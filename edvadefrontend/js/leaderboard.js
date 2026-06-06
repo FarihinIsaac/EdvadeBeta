@@ -3,11 +3,9 @@ if (localStorage.getItem("role") !== "student") {
   window.location.href = "index.html";
 }
 
-const API_BASE = typeof API !== "undefined" ? API : `${location.protocol}//${location.hostname}:3000/api`;
-
 async function apiFetch(path, options = {}) {
   const token = localStorage.getItem("token");
-  const res = await fetch(API_BASE + path, {
+  const res = await fetch(window.API + path, {
     ...options,
     headers: {
       "Content-Type": "application/json",

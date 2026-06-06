@@ -1,4 +1,3 @@
-const API_BASE = (typeof API !== "undefined" && API) ? API : "http://localhost:3000/api";
 requireAuth();
 
 const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -21,7 +20,7 @@ async function safeJson(res) {
 
 async function loadThread() {
   try {
-    const res = await fetch(`${API_BASE}/forum/posts/${id}`, {
+    const res = await fetch(`${window.API}/forum/posts/${id}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     });
 
@@ -112,7 +111,7 @@ async function submitReply() {
   const body = (bodyEl?.value || "").trim();
   if (!body) return;
 
-  const res = await fetch(`${API_BASE}/forum/posts/${id}/replies`, {
+  const res = await fetch(`${window.API}/forum/posts/${id}/replies`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -130,7 +129,7 @@ async function submitReply() {
 }
 
 async function toggleHidePost(postId, hide) {
-  const res = await fetch(`${API_BASE}/forum/posts/${postId}/hide`, {
+  const res = await fetch(`${window.API}/forum/posts/${postId}/hide`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -143,7 +142,7 @@ async function toggleHidePost(postId, hide) {
 }
 
 async function toggleHideReply(replyId, hide) {
-  const res = await fetch(`${API_BASE}/forum/replies/${replyId}/hide`, {
+  const res = await fetch(`${window.API}/forum/replies/${replyId}/hide`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",

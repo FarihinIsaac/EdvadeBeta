@@ -1,6 +1,5 @@
 requireAuth();
 
-const API_BASE = typeof API !== "undefined" ? API : "http://localhost:3000/api";
 const user = JSON.parse(localStorage.getItem("user") || "{}");
 
 const rolePill = document.getElementById("rolePill");
@@ -11,7 +10,7 @@ let posts = [];
 
 async function apiFetch(path, options = {}) {
   const token = localStorage.getItem("token");
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${window.API}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -62,7 +61,7 @@ async function loadModules() {
 async function loadPosts() {
   const moduleId = Number(document.getElementById("moduleSelect").value);
 
-  const res = await fetch(`${API_BASE}/forum/posts?moduleId=${moduleId}`, {
+  const res = await fetch(`${window.API}/forum/posts?moduleId=${moduleId}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
   });
 

@@ -1,6 +1,6 @@
 async function getAnnouncement() {
   try {
-    const response = await fetch("http://localhost:3000/api/announcements", {
+    const response = await fetch(`${window.API}/announcements`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     });
     if (!response.ok) return null;
@@ -12,7 +12,7 @@ async function getAnnouncement() {
 }
 
 async function saveAnnouncement({ title, message }) {
-  const response = await fetch("http://localhost:3000/api/announcements", {
+  const response = await fetch(`${window.API}/announcements`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

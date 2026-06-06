@@ -1,16 +1,33 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("./db");
-const DEFAULT_PROFILE_PIC = "https://via.placeholder.com/120/9CA3AF/FFFFFF?text=Avatar";
+const DEFAULT_PROFILE_PIC = "https://placehold.co/120x120/9CA3AF/FFFFFF?text=Avatar";
 function profilePicUrl(url) {
   return url ? String(url) : DEFAULT_PROFILE_PIC;
 }
 
 const app = express();
-app.use(cors({ origin: true }));
+
+const allowedOrigins = (process.env.FRONTEND_URL || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true
+  })
+);
 app.use(express.json());
 
 /* =========================
@@ -39,7 +56,14 @@ function lecturerOnly(req, res, next) {
 /* =========================
    HEALTH
 ========================= */
-app.get("/api/health", (req, res) => res.json({ ok: true }));
+app.get("/api/health", async (req, res) => {
+  try {
+    await db.query("SELECT 1");
+    res.json({ ok: true, database: "connected" });
+  } catch (err) {
+    res.status(503).json({ ok: false, database: "disconnected", message: err.message });
+  }
+});
 
 /* =========================
    AUTH: REGISTER / LOGIN
@@ -293,18 +317,92 @@ app.delete("/api/lecturer/modules/:id", auth, lecturerOnly, async (req, res) => 
    QUIZ: STUDENT LOAD + SUBMIT
 ========================= */
 app.get("/api/quiz/:moduleId", auth, async (req, res) => {
-  const moduleId = Number(req.params.moduleId);
-  const [qs] = await db.query(
-    "SELECT id, prompt, a, b, c, d FROM questions WHERE module_id=? ORDER BY id ASC",
-    [moduleId]
-  );
-  res.json(qs);
+  try {
+    const moduleId = Number(req.params.moduleId);
+    const [qs] = await db.query(
+      "SELECT id, prompt, a, b, c, d FROM questions WHERE module_id=? ORDER BY id ASC",
+      [moduleId]
+    );
+
+    const [[attemptRow]] = await db.query(
+      "SELECT COUNT(*) AS attemptCount FROM quiz_attempts WHERE user_id=? AND module_id=?",
+      [req.user.id, moduleId]
+    );
+    const attemptsMade = attemptRow.attemptCount || 0;
+    const maxAttempts = 3;
+    const attemptsLeft = Math.max(0, maxAttempts - attemptsMade);
+
+    res.json({
+      questions: qs,
+      attemptsMade,
+      attemptsLeft,
+      maxAttempts
+    });
+  } catch (err) {
+    console.error("fetch quiz error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.post("/api/quiz/:moduleId/fail", auth, async (req, res) => {
+  try {
+    const moduleId = Number(req.params.moduleId);
+    const reason = req.body.reason || "tab_switch";
+
+    const [[attemptRow]] = await db.query(
+      "SELECT COUNT(*) AS attemptCount FROM quiz_attempts WHERE user_id=? AND module_id=?",
+      [req.user.id, moduleId]
+    );
+    const attemptsMade = Number(attemptRow.attemptCount || 0);
+    const maxAttempts = 3;
+    if (attemptsMade >= maxAttempts) {
+      return res.status(400).json({ message: "No attempts left for this quiz." });
+    }
+
+    const [[countRow]] = await db.query(
+      "SELECT COUNT(*) AS total FROM questions WHERE module_id=?",
+      [moduleId]
+    );
+    const total = Number(countRow.total || 0);
+
+    await db.query(
+      "INSERT INTO quiz_attempts(user_id,module_id,score,total) VALUES(?,?,?,?)",
+      [req.user.id, moduleId, 0, total]
+    );
+
+    const newAttemptsMade = attemptsMade + 1;
+    const attemptsLeft = Math.max(0, maxAttempts - newAttemptsMade);
+
+    return res.json({
+      failed: true,
+      reason,
+      score: 0,
+      total,
+      earnedPoints: 0,
+      attemptsMade: newAttemptsMade,
+      attemptsLeft,
+      maxAttempts
+    });
+  } catch (err) {
+    console.error("quiz fail error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 app.post("/api/quiz/:moduleId/submit", auth, async (req, res) => {
   try {
     const moduleId = Number(req.params.moduleId);
     const answers = req.body.answers || {}; // {questionId: "A"}
+
+    // Restrict attempts to 3 max
+    const [[attemptRow]] = await db.query(
+      "SELECT COUNT(*) AS attemptCount FROM quiz_attempts WHERE user_id=? AND module_id=?",
+      [req.user.id, moduleId]
+    );
+    const attemptsMade = attemptRow.attemptCount || 0;
+    if (attemptsMade >= 3) {
+      return res.status(400).json({ message: "You have exceeded the maximum of 3 attempts for this quiz." });
+    }
 
     const [rows] = await db.query(
       "SELECT id, correct FROM questions WHERE module_id=?",
@@ -998,19 +1096,46 @@ app.delete("/api/account", auth, async (req, res) => {
   res.json({ ok: true });
 });
 
-/* =========================
-   START SERVER (MUST BE LAST)
-========================= */
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Backend running on http://localhost:${PORT}`);
-});
-
-app.get("/api/modules/:id", async (req, res) => {
+app.get("/api/modules/:id", auth, async (req, res) => {
   const id = req.params.id;
-  const [rows] = await db.query("SELECT * FROM modules WHERE id = ?", [id]);
+  const [rows] = await db.query("SELECT id, title, description, order_no, unlock_points FROM modules WHERE id = ?", [id]);
   if (!rows.length) return res.status(404).json({ message: "Module not found" });
   res.json(rows[0]);
 });
 
+/* =========================
+   SERVE FRONTEND (optional single-server deploy)
+   Set SERVE_FRONTEND=true and place edvadefrontend next to edvade-backend
+========================= */
+if (process.env.SERVE_FRONTEND === "true") {
+  const frontendPath = path.join(__dirname, "..", "edvadefrontend");
+  app.use(express.static(frontendPath));
+  app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(path.join(frontendPath, "index.html"));
+  });
+}
 
+/* =========================
+   START SERVER (MUST BE LAST)
+========================= */
+async function startServer() {
+  try {
+    await db.query("SELECT 1");
+    console.log("MySQL connected");
+  } catch (err) {
+    console.error("MySQL connection failed:", err.message);
+    if (process.env.NODE_ENV === "production") {
+      process.exit(1);
+    }
+  }
+
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Backend running on http://localhost:${PORT}`);
+    if (process.env.SERVE_FRONTEND === "true") {
+      console.log("Serving frontend from ../edvadefrontend");
+    }
+  });
+}
+
+startServer();
