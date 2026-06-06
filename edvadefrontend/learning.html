@@ -15,6 +15,7 @@
   <main class="main">
     <div class="panel">
       <h2 id="moduleTitle" class="section-title">Loading...</h2>
+      <div id="attemptsInfo" class="attempts-banner muted small">Quiz attempts: loading...</div>
       <div id="moduleContent" class="posts"></div>
 
       <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
@@ -43,7 +44,68 @@
   }
 
   const params = new URLSearchParams(window.location.search);
-  const moduleId = params.get("moduleId"); // e.g. 11,12,13,14
+  const moduleId = params.get("moduleId");
+
+  let attemptsLeft = 3;
+  let attemptsMade = 0;
+  let maxAttempts = 3;
+  let scrolledToBottom = false;
+
+  async function apiFetch(path) {
+    const token = localStorage.getItem("token");
+    const res = await fetch(API + path, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || "Request failed");
+    return data;
+  }
+
+  function updateAttemptsUI() {
+    const attEl = document.getElementById("attemptsInfo");
+    if (!attEl) return;
+
+    if (attemptsLeft <= 0) {
+      attEl.textContent = `No attempts left (${attemptsMade} / ${maxAttempts} used)`;
+      attEl.classList.add("attempts-exhausted");
+    } else {
+      attEl.textContent = `Quiz attempts left: ${attemptsLeft} of ${maxAttempts}`;
+      attEl.classList.remove("attempts-exhausted");
+    }
+  }
+
+  function updateQuizButton() {
+    const btn = document.getElementById("startQuizBtn");
+    if (!btn) return;
+    const canStart = scrolledToBottom && attemptsLeft > 0;
+    btn.disabled = !canStart;
+    if (attemptsLeft <= 0) {
+      btn.title = "You have used all quiz attempts for this module.";
+    } else if (!scrolledToBottom) {
+      btn.title = "Scroll to the bottom of the lesson to unlock the quiz.";
+    } else {
+      btn.title = "";
+    }
+  }
+
+  async function loadQuizAttempts() {
+    if (!moduleId) {
+      document.getElementById("attemptsInfo").textContent = "Invalid module.";
+      return;
+    }
+    try {
+      const data = await apiFetch(`/quiz/${moduleId}`);
+      attemptsLeft = data.attemptsLeft ?? 3;
+      attemptsMade = data.attemptsMade ?? 0;
+      maxAttempts = data.maxAttempts ?? 3;
+      updateAttemptsUI();
+      updateQuizButton();
+    } catch (err) {
+      document.getElementById("attemptsInfo").textContent =
+        "Could not load attempt count.";
+      console.error(err);
+    }
+  }
 
   // ✅ Put learning notes here (match your real module IDs)
   const learningNotes = {
@@ -181,6 +243,10 @@ s1.age = 20;</pre>
   }
 
   function startQuiz() {
+    if (!moduleId) return alert("Module not found.");
+    if (attemptsLeft <= 0) {
+      return alert(`No attempts left. You have used all ${maxAttempts} attempts for this module.`);
+    }
     window.location.href = `quiz.html?moduleId=${moduleId}`;
   }
 
@@ -197,16 +263,25 @@ s1.age = 20;</pre>
     window.location.href = "student-module.html";
   }
 
-  // Unlock quiz after scrolling to bottom
+  // Unlock quiz after scrolling to bottom (still requires attempts left)
   window.addEventListener("scroll", () => {
     const atBottom =
       window.innerHeight + window.scrollY >= document.body.offsetHeight - 5;
-    if (atBottom) {
-      document.getElementById("startQuizBtn").disabled = false;
+    if (atBottom && !scrolledToBottom) {
+      scrolledToBottom = true;
+      updateQuizButton();
     }
   });
 
-  loadLearning();
+  if (!moduleId) {
+    document.getElementById("moduleTitle").textContent = "Module not found";
+    document.getElementById("moduleContent").innerHTML =
+      `<div class="empty">Missing moduleId in URL. Go back and pick a module.</div>`;
+    document.getElementById("attemptsInfo").textContent = "";
+  } else {
+    loadLearning();
+    loadQuizAttempts();
+  }
 </script>
 
 </body>

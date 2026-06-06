@@ -137,54 +137,51 @@ function updateDailyXpAndStreak(userId) {
   const yesterday = dateKey(yd);
 
   // XP Today reset
- const xpDate = localStorage.getItem(xpDateKey(userId));
-if (xpDate !== today) {
-  localStorage.setItem(xpDateKey(userId), today);
-  localStorage.setItem(xpKey(userId), "0");
-}
+  const xpDate = localStorage.getItem(xpDateKey(userId));
+  if (xpDate !== today) {
+    localStorage.setItem(xpDateKey(userId), today);
+    localStorage.setItem(xpKey(userId), "0");
+  }
 
-const xpToday = parseInt(localStorage.getItem(xpKey(userId)) || "0", 10);
-
-
+  const xpToday = parseInt(localStorage.getItem(xpKey(userId)) || "0", 10);
   const xpTodayText = document.getElementById("xpTodayText");
   const xpTodayChip = document.getElementById("xpTodayChip");
   if (xpTodayText) xpTodayText.textContent = `${xpToday}`;
   if (xpTodayChip) xpTodayChip.textContent = `${xpToday} XP`;
 
-  // Streak update (home page counts as daily login)
+  // Streak update
   const streakDaysKey = streakKey(userId);
-  const streakLastKey = streakLastKey(userId);
-  
-  const last = localStorage.getItem(streakLastKey);
+  const streakLastLoginKey = streakLastKey(userId);  // ✅ renamed variable
+
+  const last = localStorage.getItem(streakLastLoginKey);
   let streak = parseInt(localStorage.getItem(streakDaysKey) || "0", 10);
 
   if (!last) {
     streak = 1;
     localStorage.setItem(streakDaysKey, String(streak));
-    localStorage.setItem(streakLastKey, today);
+    localStorage.setItem(streakLastLoginKey, today);
   } else if (last === today) {
-    // already counted today
+    // already counted today, do nothing
   } else if (last === yesterday) {
     streak += 1;
     localStorage.setItem(streakDaysKey, String(streak));
-    localStorage.setItem(streakLastKey, today);
+    localStorage.setItem(streakLastLoginKey, today);
   } else {
     streak = 1;
     localStorage.setItem(streakDaysKey, String(streak));
-    localStorage.setItem(streakLastKey, today);
+    localStorage.setItem(streakLastLoginKey, today);
   }
 
   const streakDays = document.getElementById("streakDays");
   const streakChip = document.getElementById("streakChip");
-  const streakMsg = document.getElementById("streakMsg");
+  const streakMsg  = document.getElementById("streakMsg");
 
   if (streakDays) streakDays.textContent = `${streak}`;
   if (streakChip) streakChip.textContent = `${streak} days`;
-
   if (streakMsg) {
-    if (streak >= 7) streakMsg.textContent = "Amazing! 7+ day streak 🔥";
+    if (streak >= 7)      streakMsg.textContent = "Amazing! 7+ day streak 🔥";
     else if (streak >= 3) streakMsg.textContent = "Nice! Keep it going 💪";
-    else streakMsg.textContent = "Log in daily to keep it going 🔥";
+    else                  streakMsg.textContent = "Log in daily to keep it going 🔥";
   }
 }
 (async () => {

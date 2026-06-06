@@ -1,9 +1,8 @@
 ﻿
-// One API base for the whole frontend
-window.API =
-  window.API ||
-  localStorage.getItem("API_BASE") ||
-  `${location.protocol}//${location.hostname}:3000/api`;
+// API base is set by js/config.js (load config.js before this file)
+if (!window.API) {
+  window.API = `${location.protocol}//${location.hostname}:3000/api`;
+}
 
 /* ======================
    SESSION HELPERS

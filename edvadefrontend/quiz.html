@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -10,23 +10,21 @@
 <script src="js/loadHeader.js" defer></script>
   <script src="js/loadSidebar.js" defer></script>
   
-  <div class="page">
-    <h2 id="modTitle">Quiz</h2>
+  <main class="main">
+    <div class="page centered">
+      <div class="panel">
+        <h2 id="modTitle" class="section-title">Quiz</h2>
+        <div id="attemptsInfo" style="font-weight: bold; color: #c53030; margin-bottom: 16px; font-size: 14px;">Attempts Left: --</div>
+        <div id="quizBox" class="posts"></div>
 
-    <div id="quizBox"></div>
+        <button id="submitBtn" onclick="submitQuiz()" class="btn-mini" style="margin-top:16px;">
+          Submit Answers
+        </button>
 
-    <div class="panel">
-  <h2 id="modTitle">Quiz</h2>
-
-  <div id="quizBox"></div>
-
-  <button onclick="submitQuiz()" class="btn-mini" style="margin-top:16px;">
-    Submit Answers
-  </button>
-
-  <div id="result" style="margin-top:12px;font-weight:800;"></div>
-</div>
-
+        <div id="result" style="margin-top:12px;font-weight:800;"></div>
+      </div>
+    </div>
+  </main>
 
   <script src="js/auth.js"></script>
   <script>
@@ -37,7 +35,6 @@
     }
   </script>
 
-  <script src="js/auth.js"></script>
   <script src="js/levelup.js"></script>
   <script src="js/quiz.js"></script>
 </body>
