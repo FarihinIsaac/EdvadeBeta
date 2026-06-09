@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Edvade | Lecturer Quiz</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 
-<body>
+<body class="lecturer-reports-page">
   <!-- Top Bar -->
   <div class="topbar">
     <div class="brand">Edvade (Lecturer)</div>
@@ -19,64 +20,149 @@
   <div class="app">
     <!-- Sidebar -->
     <div class="sidebar-lecturer">
-      <div class="sidebtn" onclick="location.href='lecturer-dashboard.html'">🏠</div>
-      <div class="sidebtn" onclick="location.href='lecturer-module.html'">📚</div>
-      <div class="sidebtn" onclick="location.href='lecturer-quiz.html'">🧪</div>
-      <div class="sidebtn" onclick="location.href='lecturer-reports.html'">📊</div>
-      <div class="sidebtn" onclick="logout()">🚪</div>
+      <div class="sidebar-label">Quiz Bank</div>
+      <div class="sidebtn" onclick="location.href='lecturer-dashboard.html'" title="Dashboard">🏠</div>
+      <div class="sidebtn" onclick="location.href='lecturer-module.html'" title="Modules">📚</div>
+      <div class="sidebtn sidebtn-active" onclick="location.href='lecturer-quiz.html'" title="Quiz Bank">🧪</div>
+      <div class="sidebtn" onclick="location.href='lecturer-reports.html'" title="Reports">📊</div>
+      <div class="sidebtn" onclick="logout()" title="Logout">🚪</div>
     </div>
 
     <!-- Main Content -->
-    <main class="main">
-      <div class="panel">
-        <h2 class="section-title">Create Quiz (DB)</h2>
-
-        <!-- Select Module + Add Question -->
-        <div class="card">
-          <h3 class="m0">Select Module</h3>
-          <p class="muted small">This page now uses MySQL. Questions are saved to the DB under the selected module.</p>
-
-          <!-- Module dropdown -->
-          <select class="select" id="moduleSelect" style="margin-top:10px;"></select>
-
-          <div id="moduleHint" class="muted small" style="margin-top:10px;"></div>
-
-          <hr style="border:none; height:1px; background:#e5e7eb; margin:14px 0;">
-
-          <h3 class="m0">Add Question</h3>
-          <input class="input" id="qText" placeholder="Question (e.g., What is an object?)" />
-
-          <div class="row gap" style="margin-top:10px;">
-            <input class="input" id="optA" placeholder="Option A" />
-            <input class="input" id="optB" placeholder="Option B" />
+    <main class="main reports-main">
+      <div class="reports-shell">
+        <header class="reports-header">
+          <div>
+            <h1 class="reports-title">Quiz Bank</h1>
+            <p class="reports-subtitle">Create and manage quiz questions for your modules.</p>
           </div>
-          <div class="row gap" style="margin-top:10px;">
-            <input class="input" id="optC" placeholder="Option C" />
-            <input class="input" id="optD" placeholder="Option D" />
+          <button class="btn reports-refresh-btn" type="button" id="refreshBtn">↻ Refresh</button>
+        </header>
+
+        <!-- Quiz Stats -->
+        <section class="reports-kpi-grid" id="kpiGrid">
+          <div class="reports-kpi-card">
+            <div class="reports-kpi-icon">🧪</div>
+            <div class="reports-kpi-body">
+              <div class="reports-kpi-label">Total Questions</div>
+              <div class="reports-kpi-value" id="kpiTotalQuestions">—</div>
+            </div>
           </div>
+          <div class="reports-kpi-card">
+            <div class="reports-kpi-icon">📚</div>
+            <div class="reports-kpi-body">
+              <div class="reports-kpi-label">Modules</div>
+              <div class="reports-kpi-value" id="kpiTotalModules">—</div>
+            </div>
+          </div>
+          <div class="reports-kpi-card">
+            <div class="reports-kpi-icon">✅</div>
+            <div class="reports-kpi-body">
+              <div class="reports-kpi-label">Avg. Questions/Module</div>
+              <div class="reports-kpi-value" id="kpiAvgQuestions">—</div>
+            </div>
+          </div>
+          <div class="reports-kpi-card">
+            <div class="reports-kpi-icon">📝</div>
+            <div class="reports-kpi-body">
+              <div class="reports-kpi-label">Last Added</div>
+              <div class="reports-kpi-value" id="kpiLastAdded">—</div>
+            </div>
+          </div>
+        </section>
 
-          <select class="select" id="correctOpt" style="margin-top:10px;">
-            <option value="">Correct Answer</option>
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-            <option value="D">D</option>
-          </select>
+        <div class="reports-layout">
+          <!-- Main: Create Question -->
+          <section class="reports-panel">
+            <div class="reports-panel-head">
+              <h2>Add Question</h2>
+              <p class="muted small">Create new quiz questions for your selected module.</p>
+            </div>
 
-          <button class="btn" style="margin-top:12px;" onclick="addQuestion()">Add Question (DB)</button>
+            <div style="margin-bottom: 20px;">
+              <label class="label" for="moduleSelect">Select Module</label>
+              <select class="select reports-select" id="moduleSelect" style="width: 100%;"></select>
+              <div id="moduleHint" class="muted small" style="margin-top: 10px;"></div>
+            </div>
+
+            <div class="divider" style="margin-bottom: 20px;"></div>
+
+            <div style="margin-bottom: 16px;">
+              <label class="label" for="qText">Question</label>
+              <input class="input" id="qText" placeholder="What is an object?" />
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+              <div>
+                <label class="label" for="optA">Option A</label>
+                <input class="input" id="optA" placeholder="Option A" />
+              </div>
+              <div>
+                <label class="label" for="optB">Option B</label>
+                <input class="input" id="optB" placeholder="Option B" />
+              </div>
+              <div>
+                <label class="label" for="optC">Option C</label>
+                <input class="input" id="optC" placeholder="Option C" />
+              </div>
+              <div>
+                <label class="label" for="optD">Option D</label>
+                <input class="input" id="optD" placeholder="Option D" />
+              </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <label class="label" for="correctOpt">Correct Answer</label>
+              <select class="select reports-select" id="correctOpt" style="width: 100%;">
+                <option value="">— Select Correct Answer —</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+              </select>
+            </div>
+
+            <button class="btn" onclick="addQuestion()" style="width: 100%;">Add Question</button>
+
+            <div class="divider" style="margin: 24px 0;"></div>
+
+            <!-- Questions list -->
+            <div class="reports-panel-head">
+              <h2>Questions in Selected Module</h2>
+            </div>
+            <div id="questionList" class="posts"></div>
+          </section>
+
+          <!-- Right: Info Panel -->
+          <aside class="reports-aside">
+            <div class="reports-panel">
+              <div class="reports-panel-head">
+                <h2>Tips</h2>
+                <span class="chip">Best practices</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="padding: 12px; background: #f3f4f6; border-radius: 8px; font-size: 13px; line-height: 1.6;">
+                  <strong>✓ Clear questions</strong><br>
+                  Write questions that are easy to understand for your students.
+                </div>
+                <div style="padding: 12px; background: #f3f4f6; border-radius: 8px; font-size: 13px; line-height: 1.6;">
+                  <strong>✓ Varied difficulty</strong><br>
+                  Mix easy and challenging questions to keep quizzes engaging.
+                </div>
+                <div style="padding: 12px; background: #f3f4f6; border-radius: 8px; font-size: 13px; line-height: 1.6;">
+                  <strong>✓ Correct answer</strong><br>
+                  Always verify the correct answer before saving a question.
+                </div>
+              </div>
+            </div>
+          </aside>
         </div>
-
-        <!-- Question List -->
-        <div class="card">
-          <h3 class="m0">Questions in Selected Module</h3>
-          <div id="questionList" class="posts"></div>
-        </div>
-
       </div>
     </main>
   </div>
 
   <!-- Auth + role protection -->
+  <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script>
     // ✅ Must be logged in + lecturer only
@@ -232,7 +318,35 @@ select.innerHTML =
         .replaceAll("'", "&#039;");
     }
 
+    async function loadKPIs() {
+      try {
+        const modules = await apiFetch("/lecturer/modules");
+        let totalQuestions = 0;
+
+        for (const mod of modules) {
+          const questions = await apiFetch(`/lecturer/modules/${mod.id}/questions`);
+          totalQuestions += questions.length;
+        }
+
+        const avgQuestions = modules.length > 0 ? (totalQuestions / modules.length).toFixed(1) : 0;
+
+        document.getElementById("kpiTotalQuestions").textContent = totalQuestions;
+        document.getElementById("kpiTotalModules").textContent = modules.length;
+        document.getElementById("kpiAvgQuestions").textContent = avgQuestions;
+        document.getElementById("kpiLastAdded").textContent = "—";
+      } catch (err) {
+        console.error("Error loading KPIs:", err);
+      }
+    }
+
     loadModules();
+    loadKPIs();
+
+    // Refresh button
+    document.getElementById("refreshBtn")?.addEventListener("click", () => {
+      loadModules();
+      loadKPIs();
+    });
   </script>
 </body>
 </html>

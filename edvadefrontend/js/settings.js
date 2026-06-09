@@ -1,6 +1,7 @@
 requireAuth();
 
 const token = localStorage.getItem("token");
+let currentSettings = {};
 
 const $ = (id) => document.getElementById(id);
 
@@ -33,31 +34,33 @@ async function apiFetch(path, options = {}) {
   return data;
 }
 
-function toggleTheme(theme) {
-  if (theme === "dark") document.documentElement.classList.add("dark");
-  else document.documentElement.classList.remove("dark");
-  localStorage.setItem("theme", theme);
-}
-
 function applySettings(s) {
-  const theme = s.theme || localStorage.getItem("theme") || "light";
-  $("themeToggle").checked = (theme === "dark");
-  toggleTheme(theme);
+  currentSettings = { ...currentSettings, ...s };
 
-  $("notifyEmail").checked = !!s.notifyEmail;
-  $("notifyPush").checked = !!s.notifyPush;
-  $("language").value = s.language || "en";
-  $("timezone").value = s.timezone || "UTC";
+  const role = localStorage.getItem("role");
+  if (role === "student") {
+    const lpPanel = $("learningPreferencesPanel");
+    if (lpPanel) lpPanel.style.display = "block";
+    if ($("difficultyPreference")) $("difficultyPreference").value = s.difficultyPreference || "beginner";
+    if ($("topicPreference")) $("topicPreference").value = s.topicPreference || "";
+  }
 }
 
 function gatherSettings() {
-  return {
-    theme: $("themeToggle").checked ? "dark" : "light",
-    notifyEmail: $("notifyEmail").checked,
-    notifyPush: $("notifyPush").checked,
-    language: $("language").value,
-    timezone: $("timezone").value
+  const payload = {
+    theme: currentSettings.theme || localStorage.getItem("theme") || "light",
+    notifyEmail: currentSettings.notifyEmail ?? ((localStorage.getItem("notifyEmail") ?? "true") === "true"),
+    notifyPush: currentSettings.notifyPush ?? ((localStorage.getItem("notifyPush") ?? "false") === "true"),
+    language: currentSettings.language || localStorage.getItem("language") || "en",
+    timezone: currentSettings.timezone || localStorage.getItem("timezone") || "UTC"
   };
+
+  const role = localStorage.getItem("role");
+  if (role === "student") {
+    payload.difficultyPreference = $("difficultyPreference").value;
+    payload.topicPreference = $("topicPreference").value;
+  }
+  return payload;
 }
 
 // ✅ Works even if backend endpoints do not exist (fallback to localStorage)
@@ -70,7 +73,9 @@ async function loadSettings() {
     notifyEmail: (localStorage.getItem("notifyEmail") ?? "true") === "true",
     notifyPush: (localStorage.getItem("notifyPush") ?? "false") === "true",
     language: localStorage.getItem("language") || "en",
-    timezone: localStorage.getItem("timezone") || "UTC"
+    timezone: localStorage.getItem("timezone") || "UTC",
+    difficultyPreference: localStorage.getItem("difficultyPreference") || "beginner",
+    topicPreference: localStorage.getItem("topicPreference") || ""
   };
 
   try {
@@ -94,7 +99,10 @@ async function saveSettings() {
   localStorage.setItem("notifyPush", String(payload.notifyPush));
   localStorage.setItem("language", payload.language);
   localStorage.setItem("timezone", payload.timezone);
-  toggleTheme(payload.theme);
+  if (payload.difficultyPreference !== undefined) {
+    localStorage.setItem("difficultyPreference", payload.difficultyPreference);
+    localStorage.setItem("topicPreference", payload.topicPreference);
+  }
 
   try {
     await apiFetch("/settings", {
@@ -148,7 +156,6 @@ async function handleDeleteAccount() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  $("themeToggle").addEventListener("change", () => toggleTheme($("themeToggle").checked ? "dark" : "light"));
   $("saveSettings").addEventListener("click", saveSettings);
   $("resetSettings").addEventListener("click", loadSettings);
   $("pwForm").addEventListener("submit", handlePasswordChange);

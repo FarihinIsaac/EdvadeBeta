@@ -430,6 +430,20 @@ async function submitQuiz() {
       body: JSON.stringify({ answers, tabViolations })
     });
 
+    // Always log tab switches for lecturer reports (even if 0)
+    try {
+      await apiFetch("/tab-switch-log", {
+        method: "POST",
+        body: JSON.stringify({
+          moduleId: Number(moduleId),
+          switchCount: Number(tabViolations || 0),
+          failed: result.score < (result.total / 2) // Failed if < 50%
+        })
+      });
+    } catch (logErr) {
+      console.warn("Failed to log tab switches:", logErr);
+    }
+
     document.getElementById("result").innerHTML =
       `Score: <b>${result.score}/${result.total}</b> • Earned: <b>${result.earnedPoints}</b> points`;
 

@@ -106,6 +106,30 @@ async function loadModules() {
   }
 }
 
+async function loadKPIs() {
+  try {
+    let totalQuestions = 0;
+    let totalUnlocked = 0;
+    let lastUpdated = "—";
+
+    for (const mod of modules) {
+      const questions = await apiFetch(`/lecturer/modules/${mod.id}/questions`);
+      totalQuestions += questions.length;
+      
+      if (Number(mod.unlock_points ?? 0) > 0) {
+        totalUnlocked++;
+      }
+    }
+
+    document.getElementById("kpiTotalModules").textContent = modules.length;
+    document.getElementById("kpiUnlocked").textContent = totalUnlocked;
+    document.getElementById("kpiQuestions").textContent = totalQuestions;
+    document.getElementById("kpiLastUpdated").textContent = lastUpdated;
+  } catch (err) {
+    console.error("Error loading KPIs:", err);
+  }
+}
+
 async function createModule() {
   const title = (els.title?.value || "").trim();
   const description = (els.desc?.value || "").trim();
@@ -196,6 +220,13 @@ document.addEventListener("DOMContentLoaded", () => {
   els.addBtn?.addEventListener("click", createModule);
   els.search?.addEventListener("input", renderModules);
   loadModules();
+  loadKPIs();
+
+  // Refresh button
+  document.getElementById("refreshBtn")?.addEventListener("click", () => {
+    loadModules();
+    loadKPIs();
+  });
 });
 
 // Expose for onclick

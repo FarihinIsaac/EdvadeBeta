@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS users (
   bio TEXT,
   profile_pic VARCHAR(500) DEFAULT NULL,
   theme VARCHAR(20) DEFAULT 'light',
+  difficulty_preference VARCHAR(30) DEFAULT 'beginner',
+  topic_preference TEXT,
   notify_email TINYINT(1) DEFAULT 1,
   notify_push TINYINT(1) DEFAULT 1,
   language VARCHAR(10) DEFAULT 'en',
@@ -63,6 +65,19 @@ CREATE TABLE IF NOT EXISTS quiz_attempts (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS tab_switch_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  module_id INT NOT NULL,
+  attempt_id INT,
+  switch_count INT NOT NULL DEFAULT 0,
+  failed TINYINT(1) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE,
+  FOREIGN KEY (attempt_id) REFERENCES quiz_attempts(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS badges (

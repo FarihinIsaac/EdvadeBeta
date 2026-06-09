@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Edvade | Lecturer Reports</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 
-<body>
-  <!-- Top Bar -->
+<body class="lecturer-reports-page">
   <div class="topbar">
     <div class="brand">Edvade (Lecturer)</div>
     <div class="top-actions">
@@ -15,63 +15,176 @@
     </div>
   </div>
 
-  <!-- App Layout -->
   <div class="app">
-    <!-- Sidebar -->
     <div class="sidebar-lecturer">
-      <div class="sidebtn" onclick="location.href='lecturer-dashboard.html'">🏠</div>
-      <div class="sidebtn" onclick="location.href='lecturer-module.html'">📚</div>
-      <div class="sidebtn" onclick="location.href='lecturer-quiz.html'">🧪</div>
-      <div class="sidebtn" onclick="location.href='lecturer-reports.html'">📊</div>
-      <div class="sidebtn" onclick="logout()">🚪</div>
+      <div class="sidebar-label">Reports</div>
+      <div class="sidebtn" onclick="location.href='lecturer-dashboard.html'" title="Dashboard">🏠</div>
+      <div class="sidebtn" onclick="location.href='lecturer-module.html'" title="Modules">📚</div>
+      <div class="sidebtn" onclick="location.href='lecturer-quiz.html'" title="Quiz Bank">🧪</div>
+      <div class="sidebtn sidebtn-active" onclick="location.href='lecturer-reports.html'" title="Reports">📊</div>
+      <div class="sidebtn" onclick="logout()" title="Logout">🚪</div>
     </div>
 
-    <!-- Main Content -->
-    <main class="main">
-      <div class="panel">
-        <h2 class="section-title">Class Reports</h2>
-
-        <!-- Summary -->
-        <div class="card">
-          <h3 class="m0">Overall Summary</h3>
-          <div id="overallSummary" class="muted small" style="margin-top:10px;">Loading...</div>
-        </div>
-
-        <!-- Top students -->
-        <div class="card">
-          <h3 class="m0">Top Students (by points)</h3>
-          <div id="topStudents" class="posts" style="margin-top:10px;"></div>
-        </div>
-
-        <!-- Module stats + module picker -->
-        <div class="card">
-          <div class="row space">
-            <h3 class="m0">Module Performance</h3>
-            <select class="select" id="moduleSelect" style="max-width:320px;"></select>
+    <main class="main reports-main">
+      <div class="reports-shell">
+        <header class="reports-header">
+          <div>
+            <h1 class="reports-title">Class Analytics</h1>
+            <p class="reports-subtitle">Track student engagement, quiz performance, and module progress.</p>
           </div>
+          <button class="btn reports-refresh-btn" type="button" id="refreshBtn">↻ Refresh</button>
+        </header>
 
-          <div id="moduleStats" class="muted small" style="margin-top:10px;"></div>
+        <!-- KPI cards -->
+        <section class="reports-kpi-grid" id="kpiGrid">
+          <div class="reports-kpi-card">
+            <div class="reports-kpi-icon">👥</div>
+            <div class="reports-kpi-body">
+              <div class="reports-kpi-label">Total Students</div>
+              <div class="reports-kpi-value" id="kpiStudents">—</div>
+            </div>
+          </div>
+          <div class="reports-kpi-card">
+            <div class="reports-kpi-icon">📝</div>
+            <div class="reports-kpi-body">
+              <div class="reports-kpi-label">Quiz Attempts</div>
+              <div class="reports-kpi-value" id="kpiAttempts">—</div>
+            </div>
+          </div>
+          <div class="reports-kpi-card">
+            <div class="reports-kpi-icon">📈</div>
+            <div class="reports-kpi-body">
+              <div class="reports-kpi-label">Class Avg Score</div>
+              <div class="reports-kpi-value" id="kpiAvgScore">—</div>
+            </div>
+          </div>
+          <div class="reports-kpi-card">
+            <div class="reports-kpi-icon">⭐</div>
+            <div class="reports-kpi-body">
+              <div class="reports-kpi-label">Avg Points</div>
+              <div class="reports-kpi-value" id="kpiAvgPoints">—</div>
+            </div>
+          </div>
+        </section>
 
-          <hr style="border:none; height:1px; background:#e5e7eb; margin:14px 0;">
+        <div class="reports-layout">
+          <!-- Left: module drill-down -->
+          <section class="reports-panel">
+            <div class="reports-panel-head">
+              <h2>Module Performance</h2>
+              <p class="muted small">Select a module to view detailed stats and recent attempts.</p>
+            </div>
 
-          <h3 class="m0">Student Averages (Selected Module)</h3>
-          <div id="studentAvg" class="posts" style="margin-top:10px;"></div>
+            <div class="reports-module-picker">
+              <label class="label" for="moduleSelect">Module</label>
+              <select class="select reports-select" id="moduleSelect">
+                <option value="">Loading modules...</option>
+              </select>
+            </div>
 
-          <hr style="border:none; height:1px; background:#e5e7eb; margin:14px 0;">
+            <div class="reports-module-stats" id="moduleStatsCards">
+              <div class="reports-mini-stat">
+                <span class="reports-mini-label">Attempts</span>
+                <span class="reports-mini-value" id="modAttempts">—</span>
+              </div>
+              <div class="reports-mini-stat">
+                <span class="reports-mini-label">Avg Score</span>
+                <span class="reports-mini-value" id="modAvgScore">—</span>
+              </div>
+              <div class="reports-mini-stat">
+                <span class="reports-mini-label">Best Score</span>
+                <span class="reports-mini-value" id="modBestScore">—</span>
+              </div>
+            </div>
 
-          <h3 class="m0">Latest Attempts (Selected Module)</h3>
-          <div id="latestAttempts" class="posts" style="margin-top:10px;"></div>
+            <div class="reports-module-overview" id="moduleOverview"></div>
+
+            <div class="reports-table-wrap">
+              <h3 class="reports-table-title">Student Averages</h3>
+              <table class="reports-table">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Attempts</th>
+                    <th>Avg Score</th>
+                    <th>Performance</th>
+                  </tr>
+                </thead>
+                <tbody id="studentAvgBody">
+                  <tr><td colspan="4" class="reports-empty">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="reports-table-wrap">
+              <h3 class="reports-table-title">Latest Attempts</h3>
+              <table class="reports-table">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Score</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="latestAttemptsBody">
+                  <tr><td colspan="3" class="reports-empty">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="reports-table-wrap">
+              <h3 class="reports-table-title">Tab Switch Activity 🔍</h3>
+              <p class="muted small" style="margin-bottom: 12px;">Detect students who switched tabs during quiz attempts</p>
+              <table class="reports-table">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Tab Switches</th>
+                    <th>Status</th>
+                    <th>Quiz Score</th>
+                  </tr>
+                </thead>
+                <tbody id="tabSwitchBody">
+                  <tr><td colspan="4" class="reports-empty">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Right: leaderboard + module comparison -->
+          <aside class="reports-aside">
+            <div class="reports-panel">
+              <div class="reports-panel-head">
+                <h2>Top Students</h2>
+                <span class="chip">By points</span>
+              </div>
+              <div id="topStudents" class="reports-leader-list">
+                <div class="reports-empty">Loading...</div>
+              </div>
+            </div>
+
+            <div class="reports-panel">
+              <div class="reports-panel-head">
+                <h2>All Modules</h2>
+                <p class="muted small">Quick comparison across your course.</p>
+              </div>
+              <div id="moduleComparison" class="reports-module-bars">
+                <div class="reports-empty">Loading...</div>
+              </div>
+            </div>
+          </aside>
         </div>
-
       </div>
     </main>
   </div>
 
+  <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script>
-    // ✅ auth + role protection
     requireAuth();
     if (localStorage.getItem("role") !== "lecturer") window.location.href = "index.html";
+
+    let summaryCache = null;
 
     async function apiFetch(path, options = {}) {
       const token = localStorage.getItem("token");
@@ -97,115 +210,246 @@
         .replaceAll("'", "&#039;");
     }
 
-    async function loadSummary() {
-      const overall = document.getElementById("overallSummary");
-      const top = document.getElementById("topStudents");
-      const modSelect = document.getElementById("moduleSelect");
+    function scoreClass(pct) {
+      const n = Number(pct) || 0;
+      if (n >= 80) return "reports-score-good";
+      if (n >= 50) return "reports-score-mid";
+      return "reports-score-low";
+    }
 
+    function formatDate(raw) {
+      if (!raw) return "—";
+      const d = new Date(raw);
+      if (Number.isNaN(d.getTime())) return esc(raw);
+      return d.toLocaleString(undefined, {
+        month: "short", day: "numeric", year: "numeric",
+        hour: "2-digit", minute: "2-digit"
+      });
+    }
+
+    function rankMedal(i) {
+      if (i === 0) return "🥇";
+      if (i === 1) return "🥈";
+      if (i === 2) return "🥉";
+      return `#${i + 1}`;
+    }
+
+    function renderKpis(data) {
+      document.getElementById("kpiStudents").textContent = data.totalStudents ?? 0;
+      document.getElementById("kpiAttempts").textContent = data.totalAttempts ?? 0;
+      document.getElementById("kpiAvgScore").textContent = `${data.avgScorePct ?? 0}%`;
+      document.getElementById("kpiAvgPoints").textContent = data.avgPoints ?? 0;
+    }
+
+    function renderTopStudents(students) {
+      const el = document.getElementById("topStudents");
+      if (!students.length) {
+        el.innerHTML = `<div class="reports-empty">No students registered yet.</div>`;
+        return;
+      }
+      el.innerHTML = students.map((s, i) => `
+        <div class="reports-leader-item">
+          <div class="reports-leader-rank">${rankMedal(i)}</div>
+          <div class="reports-leader-info">
+            <div class="reports-leader-name">${esc(s.name)}</div>
+            <div class="muted small">${esc(s.email)}</div>
+          </div>
+          <div class="reports-leader-meta">
+            <span class="reports-points-pill">${s.points ?? 0} pts</span>
+            <span class="muted small">Lv ${esc(s.level ?? 1)}</span>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderModuleComparison(modules) {
+      const el = document.getElementById("moduleComparison");
+      if (!modules.length) {
+        el.innerHTML = `<div class="reports-empty">No modules yet. Create modules first.</div>`;
+        return;
+      }
+      const maxPct = Math.max(...modules.map(m => Number(m.avgScorePct) || 0), 1);
+      el.innerHTML = modules.map(m => {
+        const pct = Number(m.avgScorePct) || 0;
+        const width = Math.max(4, Math.round((pct / maxPct) * 100));
+        return `
+          <div class="reports-bar-row">
+            <div class="reports-bar-head">
+              <span class="reports-bar-title">${esc(m.moduleTitle)}</span>
+              <span class="reports-bar-meta">${m.attempts ?? 0} attempts · ${pct}%</span>
+            </div>
+            <div class="reports-bar-track">
+              <div class="reports-bar-fill ${scoreClass(pct)}" style="width:${width}%"></div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function updateModuleStatsCards(s, totalQ) {
+      document.getElementById("modAttempts").textContent = s.attempts ?? 0;
+      document.getElementById("modAvgScore").textContent = `${s.avgScorePct ?? 0}%`;
+      document.getElementById("modBestScore").textContent = `${s.bestScore ?? 0}/${totalQ ?? 0}`;
+    }
+
+    function renderStudentAvgTable(rows) {
+      const body = document.getElementById("studentAvgBody");
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="4" class="reports-empty">No quiz attempts for this module yet.</td></tr>`;
+        return;
+      }
+      body.innerHTML = rows.map(r => {
+        const pct = Number(r.avgScorePct) || 0;
+        return `
+          <tr>
+            <td>
+              <div class="reports-student-cell">
+                <strong>${esc(r.name)}</strong>
+                <span class="muted small">${esc(r.email)}</span>
+              </div>
+            </td>
+            <td>${r.attempts ?? 0}</td>
+            <td><span class="reports-score-badge ${scoreClass(pct)}">${pct}%</span></td>
+            <td>
+              <div class="reports-inline-bar">
+                <div class="reports-bar-fill ${scoreClass(pct)}" style="width:${Math.max(4, pct)}%"></div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderLatestAttemptsTable(rows) {
+      const body = document.getElementById("latestAttemptsBody");
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="3" class="reports-empty">No attempts recorded yet.</td></tr>`;
+        return;
+      }
+      body.innerHTML = rows.map(a => {
+        const pct = a.total > 0 ? Math.round((a.score / a.total) * 100) : 0;
+        return `
+          <tr>
+            <td>
+              <div class="reports-student-cell">
+                <strong>${esc(a.name)}</strong>
+                <span class="muted small">${esc(a.email)}</span>
+              </div>
+            </td>
+            <td>
+              <span class="reports-score-badge ${scoreClass(pct)}">${a.score}/${a.total}</span>
+            </td>
+            <td class="muted small">${formatDate(a.created_at)}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderTabSwitchTable(summary) {
+      const body = document.getElementById("tabSwitchBody");
+      if (!summary.logs || !summary.logs.length) {
+        body.innerHTML = `<tr><td colspan="4" class="reports-empty">No tab switch activity detected.</td></tr>`;
+        return;
+      }
+      body.innerHTML = summary.logs.map(log => {
+        const pct = log.total > 0 ? Math.round((log.score / log.total) * 100) : 0;
+        const status = log.failed ? '<span class="chip" style="background: #fee2e2; color: #991b1b;">⚠️ Failed</span>' : 
+                       (log.switch_count > 0 ? '<span class="chip" style="background: #fef3c7; color: #92400e;">⚠️ Warned</span>' : '<span class="chip">✓ Passed</span>');
+        return `
+          <tr>
+            <td>
+              <div class="reports-student-cell">
+                <strong>${esc(log.name)}</strong>
+                <span class="muted small">${esc(log.email)}</span>
+              </div>
+            </td>
+            <td>
+              <span class="reports-score-badge" style="background: #f3e8ff; color: #6b21a8;">${log.switch_count || 0} times</span>
+            </td>
+            <td>${status}</td>
+            <td class="muted small">${log.score}/${log.total}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    async function loadSummary() {
+      const modSelect = document.getElementById("moduleSelect");
       try {
         const data = await apiFetch("/lecturer/reports/summary");
+        summaryCache = data;
 
-        overall.textContent =
-          `Students: ${data.totalStudents} • Attempts: ${data.totalAttempts} • Avg Score: ${data.avgScorePct}% • Avg Points: ${data.avgPoints}`;
+        renderKpis(data);
+        renderTopStudents(data.topStudents || []);
+        renderModuleComparison(data.moduleStats || []);
 
-        // top students
-        if (!data.topStudents.length) {
-          top.innerHTML = `<div class="empty">No students yet.</div>`;
-        } else {
-          top.innerHTML = data.topStudents.map(s => `
-            <div class="post">
-              <div class="row space">
-                <div>
-                  <div class="post-title">${esc(s.name)} <span class="muted small">(${esc(s.email)})</span></div>
-                  <div class="muted small">Points: ${s.points} • Level: ${esc(s.level ?? "")}</div>
-                </div>
-              </div>
-            </div>
-          `).join("");
-        }
-
-        // module dropdown
         const modules = data.moduleStats || [];
         if (!modules.length) {
           modSelect.innerHTML = `<option value="">No modules yet</option>`;
-          document.getElementById("moduleStats").textContent = "Create modules first.";
+          updateModuleStatsCards({ attempts: 0, avgScorePct: 0, bestScore: 0 }, 0);
+          document.getElementById("moduleOverview").innerHTML =
+            `<p class="reports-empty">Create modules in the Module Manager to see reports here.</p>`;
+          renderStudentAvgTable([]);
+          renderLatestAttemptsTable([]);
           return;
         }
 
         modSelect.innerHTML = modules.map(m => `
-          <option value="${m.moduleId}">
-            ${m.moduleTitle} (Attempts: ${m.attempts}, Avg: ${m.avgScorePct}%)
-          </option>
+          <option value="${m.moduleId}">${esc(m.moduleTitle)}</option>
         `).join("");
 
-        // load first module report by default
         await loadModuleReport(modSelect.value);
-
       } catch (e) {
-        overall.textContent = "Error: " + e.message;
-        top.innerHTML = `<div class="empty">Error loading.</div>`;
+        document.getElementById("kpiStudents").textContent = "!";
+        document.getElementById("topStudents").innerHTML =
+          `<div class="reports-empty reports-error">Error: ${esc(e.message)}</div>`;
       }
     }
 
     async function loadModuleReport(moduleId) {
-      const stats = document.getElementById("moduleStats");
-      const studentAvg = document.getElementById("studentAvg");
-      const latest = document.getElementById("latestAttempts");
-
       if (!moduleId) return;
 
-      stats.textContent = "Loading module report...";
-      studentAvg.innerHTML = "";
-      latest.innerHTML = "";
+      const overview = document.getElementById("moduleOverview");
+      overview.innerHTML = `<p class="muted small">Loading module data...</p>`;
 
       try {
         const data = await apiFetch(`/lecturer/reports/module/${moduleId}`);
+        const s = data.summary || {};
 
-        const s = data.summary;
-        stats.textContent =
-          `Module: ${data.module.title} • Attempts: ${s.attempts} • Avg Score: ${s.avgScorePct}% • Best Score: ${s.bestScore}/${s.totalQ}`;
+        updateModuleStatsCards(s, s.totalQ);
 
-        // student averages
-        if (!data.studentAverages.length) {
-          studentAvg.innerHTML = `<div class="empty">No attempts yet for this module.</div>`;
-        } else {
-          studentAvg.innerHTML = data.studentAverages.map(r => `
-            <div class="post">
-              <div class="row space">
-                <div>
-                  <div class="post-title">${esc(r.name)} <span class="muted small">(${esc(r.email)})</span></div>
-                  <div class="muted small">Attempts: ${r.attempts} • Avg Score: ${r.avgScorePct}%</div>
-                </div>
-              </div>
-            </div>
-          `).join("");
+        overview.innerHTML = `
+          <div class="reports-module-desc">
+            <h3>${esc(data.module.title)}</h3>
+            <p class="muted small">${esc(data.module.description || "No description")}</p>
+          </div>
+        `;
+
+        renderStudentAvgTable(data.studentAverages || []);
+        renderLatestAttemptsTable(data.latestAttempts || []);
+        
+        // Load tab switch data
+        try {
+          const tabSwitchData = await apiFetch(`/lecturer/reports/tab-switches/${moduleId}`);
+          renderTabSwitchTable(tabSwitchData);
+        } catch (tabErr) {
+          console.warn("Tab switch data not available:", tabErr);
+          document.getElementById("tabSwitchBody").innerHTML = `<tr><td colspan="4" class="reports-empty">No data available</td></tr>`;
         }
-
-        // latest attempts
-        if (!data.latestAttempts.length) {
-          latest.innerHTML = `<div class="empty">No attempts yet for this module.</div>`;
-        } else {
-          latest.innerHTML = data.latestAttempts.map(a => `
-            <div class="post">
-              <div class="row space">
-                <div>
-                  <div class="post-title">${esc(a.name)} <span class="muted small">(${esc(a.email)})</span></div>
-                  <div class="muted small">Score: ${a.score}/${a.total} • ${esc(a.created_at)}</div>
-                </div>
-              </div>
-            </div>
-          `).join("");
-        }
-
       } catch (e) {
-        stats.textContent = "Error: " + e.message;
-        studentAvg.innerHTML = `<div class="empty">Failed to load module report.</div>`;
-        latest.innerHTML = `<div class="empty">Failed to load module report.</div>`;
+        overview.innerHTML = `<p class="reports-empty reports-error">Error: ${esc(e.message)}</p>`;
+        renderStudentAvgTable([]);
+        renderLatestAttemptsTable([]);
+        document.getElementById("tabSwitchBody").innerHTML = `<tr><td colspan="4" class="reports-empty">Error loading data</td></tr>`;
       }
     }
 
     document.getElementById("moduleSelect").addEventListener("change", (e) => {
       loadModuleReport(e.target.value);
+    });
+
+    document.getElementById("refreshBtn").addEventListener("click", () => {
+      loadSummary();
     });
 
     loadSummary();

@@ -1,4 +1,4 @@
-﻿body {
+body {
     font-family: Arial, sans-serif;
     margin: 0;
     background-color: #f4f6f8;
@@ -131,6 +131,21 @@ header {
     flex-wrap: wrap;
     gap: 18px;
     margin-bottom: 18px;
+    padding: 18px 20px;
+    background: rgba(255,255,255,.78);
+    border: 1px solid rgba(0,0,0,.07);
+    border-radius: 18px;
+    box-shadow: 0 14px 32px rgba(0,0,0,.12);
+    backdrop-filter: blur(6px);
+}
+
+.leaderboard-header h1 {
+    margin: 0;
+}
+
+.leaderboard-header p {
+    margin: 6px 0 0;
+    color: rgba(17,24,39,.68);
 }
 
 .leaderboard-content {
@@ -1304,8 +1319,6 @@ body{
    Paste at the VERY BOTTOM of style.css
 ========================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
-
 :root{
   /* Minecraft-inspired bright palette */
   --bg: #bfe9ff;         /* sky */
@@ -1479,8 +1492,6 @@ button:hover, .btn-mini:hover, .auth-btn:hover{
    EDVADE — BRIGHT GAME UI (Minecraft-ish + HUD + Anim)
    Paste at the VERY BOTTOM so it overrides duplicates
 ====================================================== */
-
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
 
 :root{
   --sky1:#7dd3fc;
@@ -2097,6 +2108,12 @@ body.has-topbar .sidebar{
   justify-content:space-between;
   gap:16px;
   margin: 10px 0 18px;
+  padding: 18px 20px;
+  background: rgba(255,255,255,.78);
+  border: 1px solid rgba(0,0,0,.07);
+  border-radius: 18px;
+  box-shadow: 0 14px 32px rgba(0,0,0,.12);
+  backdrop-filter: blur(6px);
 }
 .forum-title{
   margin:0;
@@ -2106,7 +2123,7 @@ body.has-topbar .sidebar{
 }
 .forum-sub{
   margin-top:6px;
-  color: #ffffff;
+  color: rgba(17,24,39,.68);
   font-size: 14px;
 }
 
@@ -2914,6 +2931,21 @@ body {
   z-index: 900;
 }
 
+.sidebar-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #374151;
+  text-align: center;
+  width: 70px;
+  word-break: break-word;
+  line-height: 1.2;
+  padding: 8px 4px;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 8px;
+}
+
 /* ===== Lecturer Module page helpers ===== */
 .app .sidebar-lecturer + .main,
 .app .sidebar-lecturer ~ .main {
@@ -2961,8 +2993,6 @@ body {
    EDVADE — RETRO PIXEL RPG THEME (HARD PIXEL)
    Paste at VERY BOTTOM of style.css
 ========================================= */
-
-@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
 
 :root{
   --px-ink:#0b1220;
@@ -3177,4 +3207,402 @@ button:active, .btn:active, .btn-mini:active, .auth-btn:active, .react:active{
 .attempts-banner.attempts-exhausted {
   background: #fee2e2;
   color: #c53030;
+}
+
+/* ============================
+   LECTURER REPORTS
+============================ */
+.lecturer-reports-page .reports-main {
+  padding: 32px 40px 48px;
+}
+
+.reports-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.reports-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 3px solid var(--px-border) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--px-tileShadow) !important;
+  padding: 20px 24px !important;
+}
+
+.reports-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 900;
+  color: #111827;
+}
+
+.reports-subtitle {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.reports-refresh-btn {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  font-size: 14px;
+}
+
+.reports-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.reports-kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.reports-kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #dbeafe, #dcfce7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.reports-kpi-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+}
+
+.reports-kpi-value {
+  font-size: 26px;
+  font-weight: 900;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.reports-layout {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.reports-panel {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 22px 24px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+}
+
+.reports-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.reports-panel-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.reports-panel-head p {
+  margin: 0;
+}
+
+.reports-module-picker {
+  margin-bottom: 16px;
+}
+
+.reports-select {
+  width: 100%;
+  max-width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.reports-module-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.reports-mini-stat {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reports-mini-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+}
+
+.reports-mini-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.reports-module-desc h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.reports-module-desc {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.reports-table-wrap {
+  margin-top: 8px;
+  margin-bottom: 20px;
+}
+
+.reports-table-title {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #374151;
+}
+
+.reports-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.reports-table thead th {
+  text-align: left;
+  padding: 10px 12px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.reports-table tbody td {
+  padding: 12px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+}
+
+.reports-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.reports-student-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reports-score-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.reports-score-good {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.reports-score-mid {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.reports-score-low {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.reports-inline-bar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+  min-width: 80px;
+}
+
+.reports-inline-bar .reports-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.reports-leader-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reports-leader-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
+.reports-leader-rank {
+  font-size: 18px;
+  font-weight: 900;
+  min-width: 32px;
+  text-align: center;
+}
+
+.reports-leader-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.reports-leader-name {
+  font-weight: 800;
+  color: #111827;
+}
+
+.reports-leader-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.reports-points-pill {
+  background: linear-gradient(180deg, #ffd34d, #fbbf24);
+  color: #78350f;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.reports-module-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.reports-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reports-bar-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.reports-bar-title {
+  font-weight: 700;
+  color: #111827;
+}
+
+.reports-bar-meta {
+  color: #6b7280;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.reports-bar-track {
+  height: 10px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.reports-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.reports-empty {
+  color: #6b7280;
+  font-size: 14px;
+  padding: 12px 0;
+  text-align: center;
+}
+
+.reports-error {
+  color: #b91c1c;
+}
+
+.sidebtn-active {
+  outline: 3px solid #22c55e;
+  outline-offset: 2px;
+}
+
+@media (max-width: 1000px) {
+  .reports-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reports-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .lecturer-reports-page .reports-main {
+    padding: 20px 16px 32px;
+  }
+  .reports-header {
+    flex-direction: column;
+  }
+  .reports-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  .reports-module-stats {
+    grid-template-columns: 1fr;
+  }
+  .reports-table {
+    font-size: 13px;
+  }
 }

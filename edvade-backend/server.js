@@ -31,6 +31,56 @@ app.use(
 app.use(express.json());
 
 /* =========================
+   DATABASE INITIALIZATION
+========================= */
+async function initializeDatabase() {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS tab_switch_logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        module_id INT NOT NULL,
+        attempt_id INT,
+        switch_count INT NOT NULL DEFAULT 0,
+        failed TINYINT(1) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE,
+        FOREIGN KEY (attempt_id) REFERENCES quiz_attempts(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Add difficulty_preference column if not present
+    try {
+      const [columns] = await db.query("SHOW COLUMNS FROM users LIKE 'difficulty_preference'");
+      if (columns.length === 0) {
+        await db.query("ALTER TABLE users ADD COLUMN difficulty_preference VARCHAR(30) DEFAULT 'beginner'");
+        console.log("✓ Added difficulty_preference column to users table");
+      }
+    } catch (colErr) {
+      console.error("Error checking/adding difficulty_preference column:", colErr);
+    }
+
+    // Add topic_preference column if not present
+    try {
+      const [columns] = await db.query("SHOW COLUMNS FROM users LIKE 'topic_preference'");
+      if (columns.length === 0) {
+        await db.query("ALTER TABLE users ADD COLUMN topic_preference TEXT");
+        console.log("✓ Added topic_preference column to users table");
+      }
+    } catch (colErr) {
+      console.error("Error checking/adding topic_preference column:", colErr);
+    }
+
+    console.log("✓ Database tables initialized");
+  } catch (err) {
+    console.error("✗ Database initialization error:", err);
+  }
+}
+
+initializeDatabase();
+
+/* =========================
    AUTH MIDDLEWARE
 ========================= */
 function auth(req, res, next) {
@@ -174,6 +224,17 @@ app.post("/api/announcements", auth, lecturerOnly, async (req, res) => {
   } catch (err) {
     console.error("POST /api/announcements error:", err);
     res.status(500).json({ message: "Failed to publish announcement" });
+  }
+});
+
+app.delete("/api/announcements/:id", auth, lecturerOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query("DELETE FROM announcements WHERE id=?", [id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("DELETE /api/announcements error:", err);
+    res.status(500).json({ message: "Failed to delete announcement" });
   }
 });
 
@@ -483,6 +544,61 @@ app.post("/api/quiz/:moduleId/submit", auth, async (req, res) => {
   }
 });
 
+/* =========================
+   TAB SWITCH LOGGING
+========================= */
+app.post("/api/tab-switch-log", auth, async (req, res) => {
+  try {
+    const { moduleId, switchCount, failed } = req.body;
+    if (!moduleId) return res.status(400).json({ message: "moduleId required" });
+
+    // Log tab switches
+    await db.query(
+      "INSERT INTO tab_switch_logs(user_id, module_id, switch_count, failed) VALUES(?,?,?,?)",
+      [req.user.id, Number(moduleId), Number(switchCount ?? 0), failed ? 1 : 0]
+    );
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("tab-switch-log error:", err);
+    return res.status(500).json({ message: "Failed to log tab switches" });
+  }
+});
+
+app.get("/api/lecturer/reports/tab-switches/:moduleId", auth, lecturerOnly, async (req, res) => {
+  try {
+    const moduleId = Number(req.params.moduleId);
+
+    const [logs] = await db.query(`
+      SELECT 
+        u.id,
+        u.name,
+        u.email,
+        tsl.switch_count,
+        tsl.failed,
+        tsl.created_at,
+        qa.score,
+        qa.total
+      FROM tab_switch_logs tsl
+      JOIN users u ON tsl.user_id = u.id
+      LEFT JOIN quiz_attempts qa ON tsl.user_id = qa.user_id AND tsl.module_id = qa.module_id
+      WHERE tsl.module_id = ? AND u.role = 'student'
+      ORDER BY tsl.created_at DESC
+    `, [moduleId]);
+
+    const summary = {
+      totalSwitches: logs.reduce((sum, log) => sum + (log.switch_count ?? 0), 0),
+      failedDueToSwitch: logs.filter(log => log.failed).length,
+      studentsWithSwitches: logs.filter(log => log.switch_count > 0).length,
+      logs: logs
+    };
+
+    return res.json(summary);
+  } catch (err) {
+    console.error("tab-switches report error:", err);
+    return res.status(500).json({ message: "Failed to load tab switch logs" });
+  }
+});
 
 /* =========================
    LECTURER: QUESTIONS CRUD
@@ -1027,7 +1143,7 @@ app.get("/api/lecturer/reports/module/:moduleId", auth, lecturerOnly, async (req
 // ===========================
 app.get("/api/settings", auth, async (req, res) => {
   const [[row]] = await db.query(
-    "SELECT theme, notify_email AS notifyEmail, notify_push AS notifyPush, language, timezone FROM users WHERE id=?",
+    "SELECT theme, notify_email AS notifyEmail, notify_push AS notifyPush, language, timezone, difficulty_preference AS difficultyPreference, topic_preference AS topicPreference FROM users WHERE id=?",
     [req.user.id]
   );
 
@@ -1037,16 +1153,18 @@ app.get("/api/settings", auth, async (req, res) => {
     notifyEmail: !!row?.notifyEmail,
     notifyPush: !!row?.notifyPush,
     language: row?.language || "en",
-    timezone: row?.timezone || "UTC"
+    timezone: row?.timezone || "UTC",
+    difficultyPreference: row?.difficultyPreference || "beginner",
+    topicPreference: row?.topicPreference || ""
   });
 });
 
 app.put("/api/settings", auth, async (req, res) => {
-  const { theme, notifyEmail, notifyPush, language, timezone } = req.body;
+  const { theme, notifyEmail, notifyPush, language, timezone, difficultyPreference, topicPreference } = req.body;
 
   await db.query(
     `UPDATE users
-     SET theme=?, notify_email=?, notify_push=?, language=?, timezone=?
+     SET theme=?, notify_email=?, notify_push=?, language=?, timezone=?, difficulty_preference=?, topic_preference=?
      WHERE id=?`,
     [
       theme === "dark" ? "dark" : "light",
@@ -1054,6 +1172,8 @@ app.put("/api/settings", auth, async (req, res) => {
       notifyPush ? 1 : 0,
       language || "en",
       timezone || "UTC",
+      difficultyPreference || "beginner",
+      topicPreference || "",
       req.user.id
     ]
   );

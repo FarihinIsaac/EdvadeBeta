@@ -32,6 +32,21 @@
     if (!key) return;
     const btn = sidebarEl.querySelector(`[data-nav="${key}"]`);
     if (btn) btn.classList.add("active");
+
+    // Update sidebar label
+    const labelMap = {
+      "home": "Home",
+      "dashboard": "Dashboard",
+      "leaderboard": "Leaderboard",
+      "modules": "Modules",
+      "forum": "Forum",
+      "profile": "Profile",
+      "settings": "Settings"
+    };
+    const labelEl = sidebarEl.querySelector("#sidebarLabel");
+    if (labelEl && key) {
+      labelEl.textContent = labelMap[key] || "Dashboard";
+    }
   }
 
   async function init() {

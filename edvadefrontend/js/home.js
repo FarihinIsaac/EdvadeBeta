@@ -80,7 +80,6 @@ function renderModules(list) {
           : `<span class="quest-status locked">LOCKED 🔒</span>`}
       </div>
 
-      <div class="lock-overlay">🔒 Locked</div>
     </button>
   `).join("");
 }

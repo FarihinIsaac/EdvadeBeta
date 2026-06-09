@@ -17,6 +17,7 @@
   },
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "seed:lecturer": "node scripts/seed-lecturer.js"
   }
 }

@@ -22,6 +22,7 @@
     </main>
   </div>
 
+  <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/levelup.js"></script>
 
@@ -49,31 +50,93 @@
       const container = document.getElementById("moduleList");
 
       try {
-        const modules = await apiFetch("/modules");
+        const [modules, settings] = await Promise.all([
+          apiFetch("/modules"),
+          apiFetch("/settings").catch(() => ({}))
+        ]);
+
+        const difficulty = settings.difficultyPreference || "beginner";
+        const preferredTopics = (settings.topicPreference || "")
+          .split(",")
+          .map(t => t.trim().toLowerCase())
+          .filter(Boolean);
 
         if (modules.length === 0) {
           container.innerHTML = `<div class="empty">No modules available yet.</div>`;
           return;
         }
 
-container.innerHTML = modules.map(m => `
-  <div class="post ${m.unlocked ? "" : "locked"}">
-    <div class="row space">
-      <div>
-        <div class="post-title">${m.title}</div>
-        <div class="muted small">${m.description || ""}</div>
-        <div class="muted small">Unlock Points: ${m.unlock_points}</div>
-      </div>
+        // Score modules based on topic matches and difficulty level
+        const scoredModules = modules.map(m => {
+          let score = 0;
+          const reasons = [];
 
-      ${
-        m.unlocked
-          ? `<button class="btn-mini" onclick="openModule(${m.id})">Start</button>`
-          : `<span class="quest-status locked">Locked 🔒</span>`
-      }
-    </div>
-  </div>
-`).join("");
+          // Topic match
+          const titleLower = m.title.toLowerCase();
+          const descLower = (m.description || "").toLowerCase();
+          const hasTopicMatch = preferredTopics.some(topic => {
+            return titleLower.includes(topic) || descLower.includes(topic);
+          });
+          if (hasTopicMatch) {
+            score += 10;
+            reasons.push("Topic Match");
+          }
 
+          // Difficulty level match ( Beginner: order 1-2, Intermediate: order 3, Advanced: order 4+ )
+          let mDiff = "beginner";
+          if (m.order_no >= 4 || m.unlock_points > 100) {
+            mDiff = "advanced";
+          } else if (m.order_no === 3 || m.unlock_points >= 50) {
+            mDiff = "intermediate";
+          }
+
+          if (mDiff === difficulty) {
+            score += 5;
+            reasons.push(`${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Level`);
+          }
+
+          return { ...m, score, reasons };
+        });
+
+        // Sort: Unlocked first, then by score descending (recommended first), then by order
+        scoredModules.sort((a, b) => {
+          if (a.unlocked !== b.unlocked) {
+            return b.unlocked ? 1 : -1;
+          }
+          if (b.score !== a.score) {
+            return b.score - a.score;
+          }
+          return a.order_no - b.order_no;
+        });
+
+        container.innerHTML = scoredModules.map(m => {
+          const recBadge = m.reasons.length > 0
+            ? `<span class="chip" style="background: rgba(251, 191, 36, 0.15); border: 2px solid rgba(251, 191, 36, 0.3); color: #b45309; font-size: 11px; margin-left: 8px; font-weight: 800;">⭐ Recommended (${m.reasons.join(", ")})</span>`
+            : "";
+
+          const borderStyle = m.score > 0 ? `style="border-left: 6px solid #fbbf24;"` : "";
+
+          return `
+            <div class="post ${m.unlocked ? "" : "locked"}" ${borderStyle}>
+              <div class="row space">
+                <div>
+                  <div class="post-title" style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+                    ${m.title}
+                    ${recBadge}
+                  </div>
+                  <div class="muted small">${m.description || ""}</div>
+                  <div class="muted small">Unlock Points: ${m.unlock_points}</div>
+                </div>
+
+                ${
+                  m.unlocked
+                    ? `<button class="btn-mini" onclick="openModule(${m.id})">Start</button>`
+                    : `<span class="quest-status locked">Locked 🔒</span>`
+                }
+              </div>
+            </div>
+          `;
+        }).join("");
 
       } catch (err) {
         container.innerHTML = `<div class="empty">Error loading modules</div>`;

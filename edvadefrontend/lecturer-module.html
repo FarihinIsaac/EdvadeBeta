@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Edvade | Lecturer Module</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 
-<body>
+<body class="lecturer-reports-page">
   <!-- Top Bar -->
   <div class="topbar">
     <div class="brand">Edvade (Lecturer)</div>
@@ -20,30 +20,63 @@
   <div class="app">
     <!-- Sidebar -->
     <div class="sidebar-lecturer">
-      <div class="sidebtn" onclick="location.href='lecturer-dashboard.html'">🏠</div>
-      <div class="sidebtn active" onclick="location.href='lecturer-module.html'">📚</div>
-      <div class="sidebtn" onclick="location.href='lecturer-quiz.html'">🧪</div>
-      <div class="sidebtn" onclick="location.href='lecturer-reports.html'">📊</div>
-      <div class="sidebtn" onclick="logout()">🚪</div>
+      <div class="sidebar-label">Modules</div>
+      <div class="sidebtn" onclick="location.href='lecturer-dashboard.html'" title="Dashboard">🏠</div>
+      <div class="sidebtn sidebtn-active" onclick="location.href='lecturer-module.html'" title="Modules">📚</div>
+      <div class="sidebtn" onclick="location.href='lecturer-quiz.html'" title="Quiz Bank">🧪</div>
+      <div class="sidebtn" onclick="location.href='lecturer-reports.html'" title="Reports">📊</div>
+      <div class="sidebtn" onclick="logout()" title="Logout">🚪</div>
     </div>
 
     <!-- Main Content -->
-    <main class="main">
-      <div class="panel">
-        <div class="row space" style="align-items:flex-end;">
+    <main class="main reports-main">
+      <div class="reports-shell">
+        <header class="reports-header">
           <div>
-            <h2 class="section-title">Lecturer Module</h2>
-            <p class="muted" style="margin-top:-6px;">Create, edit and delete modules for students.</p>
+            <h1 class="reports-title">Module Manager</h1>
+            <p class="reports-subtitle">Create, edit and manage learning modules for your students.</p>
           </div>
-          <div class="pill">Manage content</div>
-        </div>
+          <button class="btn reports-refresh-btn" type="button" id="refreshBtn">↻ Refresh</button>
+        </header>
 
-        <div class="row gap" style="align-items:stretch;">
-          <!-- Create Module -->
-          <div class="card grow">
-            <div class="row space">
-              <h3 class="m0">Create Module</h3>
-              <div class="tag">Tip: keep titles consistent</div>
+        <!-- Module Stats -->
+        <section class="reports-kpi-grid" id="kpiGrid">
+          <div class="reports-kpi-card">
+            <div class="reports-kpi-icon">📚</div>
+            <div class="reports-kpi-body">
+              <div class="reports-kpi-label">Total Modules</div>
+              <div class="reports-kpi-value" id="kpiTotalModules">—</div>
+            </div>
+          </div>
+          <div class="reports-kpi-card">
+            <div class="reports-kpi-icon">📖</div>
+            <div class="reports-kpi-body">
+              <div class="reports-kpi-label">Unlocked by Points</div>
+              <div class="reports-kpi-value" id="kpiUnlocked">—</div>
+            </div>
+          </div>
+          <div class="reports-kpi-card">
+            <div class="reports-kpi-icon">📝</div>
+            <div class="reports-kpi-body">
+              <div class="reports-kpi-label">Total Questions</div>
+              <div class="reports-kpi-value" id="kpiQuestions">—</div>
+            </div>
+          </div>
+          <div class="reports-kpi-card">
+            <div class="reports-kpi-icon">✏️</div>
+            <div class="reports-kpi-body">
+              <div class="reports-kpi-label">Last Updated</div>
+              <div class="reports-kpi-value" id="kpiLastUpdated">—</div>
+            </div>
+          </div>
+        </section>
+
+        <div class="reports-layout">
+          <!-- Main: Create Module -->
+          <section class="reports-panel">
+            <div class="reports-panel-head">
+              <h2>Create New Module</h2>
+              <p class="muted small">Add a new learning module for your students.</p>
             </div>
 
             <div class="form-grid">
@@ -53,42 +86,66 @@
               </div>
 
               <div class="form-group" style="grid-column: 1 / -1;">
-                <label class="label">Unlock points</label>
-                <input class="input" id="modUnlock" type="number" min="0" step="1" value="0" />
-              </div>
-
-              <div class="form-group" style="grid-column: 1 / -1;">
-                <label class="label">Order</label>
-                <input class="input" id="modOrder" type="number" min="1" step="1" placeholder="Auto" />
-              </div>
-
-              <div class="form-group" style="grid-column:1 / -1;">
                 <label class="label">Description</label>
                 <textarea class="textarea" id="modDesc" placeholder="Basics of Java variables..."></textarea>
               </div>
+
+              <div class="form-group">
+                <label class="label">Unlock Points</label>
+                <input class="input" id="modUnlock" type="number" min="0" step="1" value="0" />
+              </div>
+
+              <div class="form-group">
+                <label class="label">Order</label>
+                <input class="input" id="modOrder" type="number" min="1" step="1" placeholder="Auto" />
+              </div>
             </div>
 
-            <div class="row space" style="margin-top:10px;">
-              <div id="moduleHint" class="muted small"></div>
+            <div style="display: flex; gap: 10px; align-items: center; margin-top: 16px;">
               <button class="btn" id="addModuleBtn" type="button">Add Module</button>
+              <div id="moduleHint" class="muted small"></div>
             </div>
-          </div>
 
-          <!-- Modules list -->
-          <div class="card grow">
-            <div class="row space">
-              <h3 class="m0">Modules</h3>
+            <div class="divider" style="margin: 24px 0;"></div>
+
+            <!-- Modules list -->
+            <div class="reports-panel-head">
+              <h2>All Modules</h2>
               <input id="moduleSearch" class="input" placeholder="Search module..." style="max-width:260px;" />
             </div>
 
             <div id="moduleList" class="posts" style="margin-top:10px;"></div>
-          </div>
-        </div>
+          </section>
 
+          <!-- Right: Info Panel -->
+          <aside class="reports-aside">
+            <div class="reports-panel">
+              <div class="reports-panel-head">
+                <h2>Tips</h2>
+                <span class="chip">Best practices</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="padding: 12px; background: #f3f4f6; border-radius: 8px; font-size: 13px; line-height: 1.6;">
+                  <strong>✓ Keep titles consistent</strong><br>
+                  Use clear naming conventions for your modules to help students navigate easily.
+                </div>
+                <div style="padding: 12px; background: #f3f4f6; border-radius: 8px; font-size: 13px; line-height: 1.6;">
+                  <strong>✓ Set unlock points</strong><br>
+                  Use points to control module access and encourage student progression.
+                </div>
+                <div style="padding: 12px; background: #f3f4f6; border-radius: 8px; font-size: 13px; line-height: 1.6;">
+                  <strong>✓ Organize by order</strong><br>
+                  Set the module order to guide students through your curriculum.
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
     </main>
   </div>
 
+  <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/lecturer-module.js"></script>
 </body>
