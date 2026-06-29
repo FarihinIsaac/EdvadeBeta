@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS questions (
   c VARCHAR(500) NOT NULL,
   d VARCHAR(500) NOT NULL,
   correct CHAR(1) NOT NULL,
+  difficulty VARCHAR(30) NOT NULL DEFAULT 'beginner',
   FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE
 );
 
@@ -78,6 +79,15 @@ CREATE TABLE IF NOT EXISTS tab_switch_logs (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE,
   FOREIGN KEY (attempt_id) REFERENCES quiz_attempts(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS user_module_preferences (
+  user_id INT NOT NULL,
+  module_id INT NOT NULL,
+  difficulty_preference VARCHAR(30) NOT NULL DEFAULT 'beginner',
+  PRIMARY KEY (user_id, module_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS badges (

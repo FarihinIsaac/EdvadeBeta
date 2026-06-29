@@ -13,6 +13,8 @@ async function apiFetch(path, options = {}) {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+      "Cache-Control": "no-cache",
+      "Pragma": "no-cache",
       ...(options.headers || {})
     }
   });
@@ -183,6 +185,19 @@ function handleTabTimeout() {
 function handleVisibilityChange() {
   if (document.hidden) {
     tabViolations++;
+
+    // Report tab switch in real-time
+    const moduleId = getModuleId();
+    if (moduleId) {
+      apiFetch("/tab-switch-log", {
+        method: "POST",
+        body: JSON.stringify({
+          moduleId: Number(moduleId),
+          switchCount: tabViolations,
+          failed: tabViolations >= 2
+        })
+      }).catch(err => console.warn("Failed to log tab switch:", err));
+    }
 
     if (tabViolations >= 2) {
       handleTabSwitchFailure();
@@ -384,15 +399,28 @@ async function loadQuiz() {
   }
 
   document.getElementById("quizBox").innerHTML = questions
-    .map((q, idx) => `
-      <div class="quiz-question">
-        <p><b>Q${idx + 1}:</b> ${escapeHtml(q.prompt)}</p>
-        ${renderOption(q.id, "A", q.a)}
-        ${renderOption(q.id, "B", q.b)}
-        ${renderOption(q.id, "C", q.c)}
-        ${renderOption(q.id, "D", q.d)}
-      </div>
-    `)
+    .map((q, idx) => {
+      let badgeStyle = "background: #e6fffa; color: #319795; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; margin-left: 8px; display: inline-block;";
+      if (q.difficulty === "intermediate") {
+        badgeStyle = "background: #feebc8; color: #dd6b20; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; margin-left: 8px; display: inline-block;";
+      } else if (q.difficulty === "advanced") {
+        badgeStyle = "background: #fed7d7; color: #e53e3e; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; margin-left: 8px; display: inline-block;";
+      }
+      const difficultyText = (q.difficulty || "beginner").toUpperCase();
+
+      return `
+        <div class="quiz-question">
+          <p style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <b>Q${idx + 1}:</b> ${escapeHtml(q.prompt)}
+            <span style="${badgeStyle}">${difficultyText}</span>
+          </p>
+          ${renderOption(q.id, "A", q.a)}
+          ${renderOption(q.id, "B", q.b)}
+          ${renderOption(q.id, "C", q.c)}
+          ${renderOption(q.id, "D", q.d)}
+        </div>
+      `;
+    })
     .join("");
 
   startTabWatcher();
@@ -429,20 +457,6 @@ async function submitQuiz() {
       method: "POST",
       body: JSON.stringify({ answers, tabViolations })
     });
-
-    // Always log tab switches for lecturer reports (even if 0)
-    try {
-      await apiFetch("/tab-switch-log", {
-        method: "POST",
-        body: JSON.stringify({
-          moduleId: Number(moduleId),
-          switchCount: Number(tabViolations || 0),
-          failed: result.score < (result.total / 2) // Failed if < 50%
-        })
-      });
-    } catch (logErr) {
-      console.warn("Failed to log tab switches:", logErr);
-    }
 
     document.getElementById("result").innerHTML =
       `Score: <b>${result.score}/${result.total}</b> • Earned: <b>${result.earnedPoints}</b> points`;

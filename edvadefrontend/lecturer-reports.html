@@ -352,9 +352,17 @@
         return;
       }
       body.innerHTML = summary.logs.map(log => {
-        const pct = log.total > 0 ? Math.round((log.score / log.total) * 100) : 0;
-        const status = log.failed ? '<span class="chip" style="background: #fee2e2; color: #991b1b;">⚠️ Failed</span>' : 
-                       (log.switch_count > 0 ? '<span class="chip" style="background: #fef3c7; color: #92400e;">⚠️ Warned</span>' : '<span class="chip">✓ Passed</span>');
+        const scoreText = log.attempt_id !== null ? `${log.score}/${log.total}` : '<span class="muted" style="font-size: 11px; font-style: italic;">In Progress</span>';
+        
+        let status = '<span class="chip" style="background: #ecfdf5; color: #065f46; display: inline-block; white-space: nowrap;">✓ Passed</span>';
+        if (log.failed) {
+          status = '<span class="chip" style="background: #fee2e2; color: #991b1b; display: inline-block; white-space: nowrap;">⚠️ Failed (Tab Switch)</span>';
+        } else if (log.attempt_id === null) {
+          status = '<span class="chip" style="background: #eff6ff; color: #1e40af; display: inline-block; white-space: nowrap;">✍️ In Progress</span>';
+        } else if (log.switch_count > 0) {
+          status = '<span class="chip" style="background: #fef3c7; color: #92400e; display: inline-block; white-space: nowrap;">⚠️ Warned</span>';
+        }
+
         return `
           <tr>
             <td>
@@ -367,7 +375,7 @@
               <span class="reports-score-badge" style="background: #f3e8ff; color: #6b21a8;">${log.switch_count || 0} times</span>
             </td>
             <td>${status}</td>
-            <td class="muted small">${log.score}/${log.total}</td>
+            <td class="muted small">${scoreText}</td>
           </tr>
         `;
       }).join("");

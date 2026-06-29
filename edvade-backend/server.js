@@ -30,6 +30,17 @@ app.use(
 );
 app.use(express.json());
 
+// Disable caching for all API routes to ensure dynamic updates (e.g. difficulty changes) are immediately reflected
+app.use("/api", (req, res, next) => {
+  res.set({
+    "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
+    "Surrogate-Control": "no-store"
+  });
+  next();
+});
+
 /* =========================
    DATABASE INITIALIZATION
 ========================= */
@@ -47,6 +58,17 @@ async function initializeDatabase() {
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE,
         FOREIGN KEY (attempt_id) REFERENCES quiz_attempts(id) ON DELETE CASCADE
+      )
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS user_module_preferences (
+        user_id INT NOT NULL,
+        module_id INT NOT NULL,
+        difficulty_preference VARCHAR(30) NOT NULL DEFAULT 'beginner',
+        PRIMARY KEY (user_id, module_id),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE
       )
     `);
 
@@ -70,6 +92,17 @@ async function initializeDatabase() {
       }
     } catch (colErr) {
       console.error("Error checking/adding topic_preference column:", colErr);
+    }
+
+    // Add difficulty column to questions if not present
+    try {
+      const [columns] = await db.query("SHOW COLUMNS FROM questions LIKE 'difficulty'");
+      if (columns.length === 0) {
+        await db.query("ALTER TABLE questions ADD COLUMN difficulty VARCHAR(30) DEFAULT 'beginner'");
+        console.log("✓ Added difficulty column to questions table");
+      }
+    } catch (colErr) {
+      console.error("Error checking/adding difficulty column to questions:", colErr);
     }
 
     console.log("✓ Database tables initialized");
@@ -306,18 +339,28 @@ app.put("/api/profile", auth, async (req, res) => {
 /* =========================
    MODULES (Student view locked/unlocked)
 ========================= */
+/* =========================
+   MODULES (Student view locked/unlocked)
+========================= */
 app.get("/api/modules", auth, async (req, res) => {
   try {
     const [[me]] = await db.query("SELECT points FROM users WHERE id=?", [req.user.id]);
-    const [mods] = await db.query(
-      "SELECT id,title,description,order_no,unlock_points FROM modules ORDER BY order_no ASC"
-    );
+    const [mods] = await db.query(`
+      SELECT m.id, m.title, m.description, m.order_no, m.unlock_points,
+             (SELECT GROUP_CONCAT(DISTINCT q.difficulty) FROM questions q WHERE q.module_id = m.id) AS difficulties
+      FROM modules m
+      ORDER BY m.order_no ASC
+    `);
 
     res.json(
-      mods.map(m => ({
-        ...m,
-        unlocked: (me?.points ?? 0) >= (m.unlock_points ?? 0)
-      }))
+      mods.map(m => {
+        const diffList = m.difficulties ? m.difficulties.split(",") : ["beginner"];
+        return {
+          ...m,
+          difficulties: diffList,
+          unlocked: (me?.points ?? 0) >= (m.unlock_points ?? 0)
+        };
+      })
     );
   } catch (err) {
     console.error("GET /api/modules error:", err);
@@ -329,10 +372,26 @@ app.get("/api/modules", auth, async (req, res) => {
    LECTURER: MODULE CRUD
 ========================= */
 app.get("/api/lecturer/modules", auth, lecturerOnly, async (req, res) => {
-  const [mods] = await db.query(
-    "SELECT id,title,description,order_no,unlock_points FROM modules ORDER BY order_no ASC"
-  );
-  res.json(mods);
+  try {
+    const [mods] = await db.query(`
+      SELECT m.id, m.title, m.description, m.order_no, m.unlock_points,
+             (SELECT GROUP_CONCAT(DISTINCT q.difficulty) FROM questions q WHERE q.module_id = m.id) AS difficulties
+      FROM modules m
+      ORDER BY m.order_no ASC
+    `);
+    res.json(
+      mods.map(m => {
+        const diffList = m.difficulties ? m.difficulties.split(",") : ["beginner"];
+        return {
+          ...m,
+          difficulties: diffList
+        };
+      })
+    );
+  } catch (err) {
+    console.error("GET /api/lecturer/modules error:", err);
+    res.status(500).json({ message: "Failed to load lecturer modules" });
+  }
 });
 
 app.post("/api/lecturer/modules", auth, lecturerOnly, async (req, res) => {
@@ -380,10 +439,40 @@ app.delete("/api/lecturer/modules/:id", auth, lecturerOnly, async (req, res) => 
 app.get("/api/quiz/:moduleId", auth, async (req, res) => {
   try {
     const moduleId = Number(req.params.moduleId);
-    const [qs] = await db.query(
-      "SELECT id, prompt, a, b, c, d FROM questions WHERE module_id=? ORDER BY id ASC",
-      [moduleId]
+    
+    const [[prefRow]] = await db.query(
+      "SELECT difficulty_preference FROM user_module_preferences WHERE user_id=? AND module_id=?",
+      [req.user.id, moduleId]
     );
+    const pref = prefRow?.difficulty_preference || "beginner";
+
+    // Attempt to load questions matching student preference, with fallback to others
+    const difficulties = ["beginner", "intermediate", "advanced"];
+    const searchOrder = [pref];
+    for (const d of difficulties) {
+      if (d !== pref) searchOrder.push(d);
+    }
+
+    let qs = [];
+    for (const diff of searchOrder) {
+      const [rows] = await db.query(
+        "SELECT id, prompt, a, b, c, d, difficulty FROM questions WHERE module_id=? AND difficulty=? ORDER BY id ASC",
+        [moduleId, diff]
+      );
+      if (rows.length > 0) {
+        qs = rows;
+        break;
+      }
+    }
+
+    // Ultimate fallback if no questions matching any specified difficulty
+    if (qs.length === 0) {
+      const [rows] = await db.query(
+        "SELECT id, prompt, a, b, c, d, difficulty FROM questions WHERE module_id=? ORDER BY id ASC",
+        [moduleId]
+      );
+      qs = rows;
+    }
 
     const [[attemptRow]] = await db.query(
       "SELECT COUNT(*) AS attemptCount FROM quiz_attempts WHERE user_id=? AND module_id=?",
@@ -426,10 +515,33 @@ app.post("/api/quiz/:moduleId/fail", auth, async (req, res) => {
     );
     const total = Number(countRow.total || 0);
 
-    await db.query(
+    const [insertRes] = await db.query(
       "INSERT INTO quiz_attempts(user_id,module_id,score,total) VALUES(?,?,?,?)",
       [req.user.id, moduleId, 0, total]
     );
+    const attemptId = insertRes.insertId;
+
+    // Link tab switch log and mark as failed if failed due to tab switch/timeout
+    const isTabSwitchFailure = reason === "tab_switch" || reason === "tab_timeout";
+    
+    // Find active tab switch log (without attempt_id linked yet)
+    const [existing] = await db.query(
+      "SELECT id FROM tab_switch_logs WHERE user_id=? AND module_id=? AND attempt_id IS NULL",
+      [req.user.id, moduleId]
+    );
+
+    if (existing.length > 0) {
+      await db.query(
+        "UPDATE tab_switch_logs SET attempt_id=?, failed=?, switch_count = COALESCE(NULLIF(switch_count, 0), 2) WHERE id=?",
+        [attemptId, isTabSwitchFailure ? 1 : 0, existing[0].id]
+      );
+    } else {
+      // Create one if none existed
+      await db.query(
+        "INSERT INTO tab_switch_logs(user_id, module_id, switch_count, failed, attempt_id) VALUES(?,?,?,?,?)",
+        [req.user.id, moduleId, isTabSwitchFailure ? 2 : 0, isTabSwitchFailure ? 1 : 0, attemptId]
+      );
+    }
 
     const newAttemptsMade = attemptsMade + 1;
     const attemptsLeft = Math.max(0, maxAttempts - newAttemptsMade);
@@ -478,10 +590,30 @@ app.post("/api/quiz/:moduleId/submit", auth, async (req, res) => {
       if (given && given === String(q.correct || "").toUpperCase()) score++;
     }
 
-    await db.query(
+    const [insertRes] = await db.query(
       "INSERT INTO quiz_attempts(user_id,module_id,score,total) VALUES(?,?,?,?)",
       [req.user.id, moduleId, score, total]
     );
+    const attemptId = insertRes.insertId;
+
+    // Link tab switch log (if any exists) to this attempt
+    const [existing] = await db.query(
+      "SELECT id FROM tab_switch_logs WHERE user_id=? AND module_id=? AND attempt_id IS NULL",
+      [req.user.id, moduleId]
+    );
+
+    if (existing.length > 0) {
+      await db.query(
+        "UPDATE tab_switch_logs SET attempt_id=?, failed=0 WHERE id=?",
+        [attemptId, existing[0].id]
+      );
+    } else {
+      // Create a passed tab switch log with 0 switches if none existed
+      await db.query(
+        "INSERT INTO tab_switch_logs(user_id, module_id, switch_count, failed, attempt_id) VALUES(?,?,0,0,?)",
+        [req.user.id, moduleId, attemptId]
+      );
+    }
 
     // ✅ define earned points
     const earned = score * 10;
@@ -552,11 +684,25 @@ app.post("/api/tab-switch-log", auth, async (req, res) => {
     const { moduleId, switchCount, failed } = req.body;
     if (!moduleId) return res.status(400).json({ message: "moduleId required" });
 
-    // Log tab switches
-    await db.query(
-      "INSERT INTO tab_switch_logs(user_id, module_id, switch_count, failed) VALUES(?,?,?,?)",
-      [req.user.id, Number(moduleId), Number(switchCount ?? 0), failed ? 1 : 0]
+    // Check if there is an active tab switch log for this user and module (where attempt_id IS NULL)
+    const [existing] = await db.query(
+      "SELECT id FROM tab_switch_logs WHERE user_id=? AND module_id=? AND attempt_id IS NULL",
+      [req.user.id, moduleId]
     );
+
+    if (existing.length > 0) {
+      // Update existing log
+      await db.query(
+        "UPDATE tab_switch_logs SET switch_count=?, failed=? WHERE id=?",
+        [Number(switchCount ?? 0), failed ? 1 : 0, existing[0].id]
+      );
+    } else {
+      // Insert new log
+      await db.query(
+        "INSERT INTO tab_switch_logs(user_id, module_id, switch_count, failed, attempt_id) VALUES(?,?,?,?, NULL)",
+        [req.user.id, Number(moduleId), Number(switchCount ?? 0), failed ? 1 : 0]
+      );
+    }
 
     return res.json({ ok: true });
   } catch (err) {
@@ -574,6 +720,7 @@ app.get("/api/lecturer/reports/tab-switches/:moduleId", auth, lecturerOnly, asyn
         u.id,
         u.name,
         u.email,
+        tsl.attempt_id,
         tsl.switch_count,
         tsl.failed,
         tsl.created_at,
@@ -581,7 +728,7 @@ app.get("/api/lecturer/reports/tab-switches/:moduleId", auth, lecturerOnly, asyn
         qa.total
       FROM tab_switch_logs tsl
       JOIN users u ON tsl.user_id = u.id
-      LEFT JOIN quiz_attempts qa ON tsl.user_id = qa.user_id AND tsl.module_id = qa.module_id
+      LEFT JOIN quiz_attempts qa ON tsl.attempt_id = qa.id
       WHERE tsl.module_id = ? AND u.role = 'student'
       ORDER BY tsl.created_at DESC
     `, [moduleId]);
@@ -606,7 +753,7 @@ app.get("/api/lecturer/reports/tab-switches/:moduleId", auth, lecturerOnly, asyn
 app.get("/api/lecturer/modules/:moduleId/questions", auth, lecturerOnly, async (req, res) => {
   const moduleId = Number(req.params.moduleId);
   const [qs] = await db.query(
-    "SELECT id, module_id, prompt, a, b, c, d, correct FROM questions WHERE module_id=? ORDER BY id ASC",
+    "SELECT id, module_id, prompt, a, b, c, d, correct, difficulty FROM questions WHERE module_id=? ORDER BY id ASC",
     [moduleId]
   );
   res.json(qs);
@@ -614,7 +761,7 @@ app.get("/api/lecturer/modules/:moduleId/questions", auth, lecturerOnly, async (
 
 app.post("/api/lecturer/modules/:moduleId/questions", auth, lecturerOnly, async (req, res) => {
   const moduleId = Number(req.params.moduleId);
-  const { prompt, a, b, c, d, correct } = req.body;
+  const { prompt, a, b, c, d, correct, difficulty } = req.body;
 
   if (!prompt || !a || !b || !c || !d || !correct) {
     return res.status(400).json({ message: "Missing fields" });
@@ -625,9 +772,14 @@ app.post("/api/lecturer/modules/:moduleId/questions", auth, lecturerOnly, async 
     return res.status(400).json({ message: "correct must be A/B/C/D" });
   }
 
+  const diff = (difficulty || "beginner").toLowerCase();
+  if (!["beginner", "intermediate", "advanced"].includes(diff)) {
+    return res.status(400).json({ message: "difficulty must be beginner, intermediate, or advanced" });
+  }
+
   const [r] = await db.query(
-    "INSERT INTO questions(module_id, prompt, a, b, c, d, correct) VALUES (?,?,?,?,?,?,?)",
-    [moduleId, prompt, a, b, c, d, corr]
+    "INSERT INTO questions(module_id, prompt, a, b, c, d, correct, difficulty) VALUES (?,?,?,?,?,?,?,?)",
+    [moduleId, prompt, a, b, c, d, corr, diff]
   );
 
   res.json({ ok: true, id: r.insertId });
@@ -635,17 +787,32 @@ app.post("/api/lecturer/modules/:moduleId/questions", auth, lecturerOnly, async 
 
 app.patch("/api/lecturer/questions/:id", auth, lecturerOnly, async (req, res) => {
   const id = Number(req.params.id);
-  const { prompt, a, b, c, d, correct } = req.body;
+  const { prompt, a, b, c, d, correct, difficulty } = req.body;
 
   const corr = String(correct).toUpperCase();
   if (!["A", "B", "C", "D"].includes(corr)) {
     return res.status(400).json({ message: "correct must be A/B/C/D" });
   }
 
-  await db.query(
-    "UPDATE questions SET prompt=?, a=?, b=?, c=?, d=?, correct=? WHERE id=?",
-    [prompt, a, b, c, d, corr, id]
-  );
+  let diff = undefined;
+  if (difficulty) {
+    diff = String(difficulty).toLowerCase();
+    if (!["beginner", "intermediate", "advanced"].includes(diff)) {
+      return res.status(400).json({ message: "difficulty must be beginner, intermediate, or advanced" });
+    }
+  }
+
+  if (diff) {
+    await db.query(
+      "UPDATE questions SET prompt=?, a=?, b=?, c=?, d=?, correct=?, difficulty=? WHERE id=?",
+      [prompt, a, b, c, d, corr, diff, id]
+    );
+  } else {
+    await db.query(
+      "UPDATE questions SET prompt=?, a=?, b=?, c=?, d=?, correct=? WHERE id=?",
+      [prompt, a, b, c, d, corr, id]
+    );
+  }
 
   res.json({ ok: true });
 });
@@ -1146,6 +1313,12 @@ app.get("/api/settings", auth, async (req, res) => {
     "SELECT theme, notify_email AS notifyEmail, notify_push AS notifyPush, language, timezone, difficulty_preference AS difficultyPreference, topic_preference AS topicPreference FROM users WHERE id=?",
     [req.user.id]
   );
+  const [modulePreferences] = await db.query(
+    `SELECT module_id AS moduleId, difficulty_preference AS difficultyPreference
+     FROM user_module_preferences
+     WHERE user_id=?`,
+    [req.user.id]
+  );
 
   // defaults if columns are null
   res.json({
@@ -1155,12 +1328,24 @@ app.get("/api/settings", auth, async (req, res) => {
     language: row?.language || "en",
     timezone: row?.timezone || "UTC",
     difficultyPreference: row?.difficultyPreference || "beginner",
-    topicPreference: row?.topicPreference || ""
+    topicPreference: row?.topicPreference || "",
+    modulePreferences
   });
 });
 
 app.put("/api/settings", auth, async (req, res) => {
-  const { theme, notifyEmail, notifyPush, language, timezone, difficultyPreference, topicPreference } = req.body;
+  const { theme, notifyEmail, notifyPush, language, timezone, difficultyPreference, topicPreference, moduleId } = req.body;
+  const selectedModuleId = Number(moduleId || topicPreference || 0);
+  const diff = String(difficultyPreference || "beginner").toLowerCase();
+
+  if (!["beginner", "intermediate", "advanced"].includes(diff)) {
+    return res.status(400).json({ message: "difficultyPreference must be beginner, intermediate, or advanced" });
+  }
+
+  if (selectedModuleId) {
+    const [[moduleRow]] = await db.query("SELECT id FROM modules WHERE id=?", [selectedModuleId]);
+    if (!moduleRow) return res.status(400).json({ message: "Selected module not found" });
+  }
 
   await db.query(
     `UPDATE users
@@ -1172,11 +1357,20 @@ app.put("/api/settings", auth, async (req, res) => {
       notifyPush ? 1 : 0,
       language || "en",
       timezone || "UTC",
-      difficultyPreference || "beginner",
-      topicPreference || "",
+      diff,
+      selectedModuleId ? String(selectedModuleId) : (topicPreference || ""),
       req.user.id
     ]
   );
+
+  if (selectedModuleId) {
+    await db.query(
+      `INSERT INTO user_module_preferences(user_id, module_id, difficulty_preference)
+       VALUES(?,?,?)
+       ON DUPLICATE KEY UPDATE difficulty_preference=VALUES(difficulty_preference)`,
+      [req.user.id, selectedModuleId, diff]
+    );
+  }
 
   res.json({ ok: true });
 });

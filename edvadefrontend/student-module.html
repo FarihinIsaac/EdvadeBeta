@@ -10,16 +10,25 @@
 <script src="js/loadHeader.js"></script>
 <div id="sidebarMount"></div>
 <script src="js/loadSidebar.js"></script>
-  <!-- App Layout -->
-  <div class="app">
+  <div class="page centered">
+      
+      <!-- Header -->
+      <div class="leaderboard-header">
+        <div>
+          <h1>Learning Modules</h1>
+          <p>Complete modules to earn XP, unlock achievements, and level up! 📚</p>
+        </div>
+      </div>
 
-    <!-- Main Content -->
-    <main class="main">
-      <div class="panel centered">
-        <h2 class="section-title">Learning Modules</h2>
+      <!-- Modules List Panel -->
+      <div class="panel" style="max-width: none;">
+        <div class="panel-head">
+          <h2>Learning Path</h2>
+          <span class="chip">Modules</span>
+        </div>
         <div id="moduleList" class="posts"></div>
       </div>
-    </main>
+
   </div>
 
   <script src="js/config.js"></script>
@@ -27,7 +36,7 @@
   <script src="js/levelup.js"></script>
 
   <script>
-    // 🔐 Auth + role protection
+    // 🛡️ Auth + role protection
     requireAuth();
     if (localStorage.getItem("role") !== "student") {
       window.location.href = "index.html";
@@ -38,7 +47,9 @@
       const token = localStorage.getItem("token");
       const res = await fetch(API + path, {
         headers: {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          "Cache-Control": "no-cache",
+          "Pragma": "no-cache"
         }
       });
       const data = await res.json();
@@ -55,11 +66,13 @@
           apiFetch("/settings").catch(() => ({}))
         ]);
 
-        const difficulty = settings.difficultyPreference || "beginner";
-        const preferredTopics = (settings.topicPreference || "")
-          .split(",")
-          .map(t => t.trim().toLowerCase())
-          .filter(Boolean);
+        const selectedPreferredModuleId = String(settings.topicPreference || "");
+        const modulePreferenceMap = Object.fromEntries(
+          (settings.modulePreferences || []).map(pref => [
+            String(pref.moduleId ?? pref.module_id),
+            pref.difficultyPreference || pref.difficulty_preference || "beginner"
+          ])
+        );
 
         if (modules.length === 0) {
           container.innerHTML = `<div class="empty">No modules available yet.</div>`;
@@ -72,30 +85,28 @@
           const reasons = [];
 
           // Topic match
-          const titleLower = m.title.toLowerCase();
-          const descLower = (m.description || "").toLowerCase();
-          const hasTopicMatch = preferredTopics.some(topic => {
-            return titleLower.includes(topic) || descLower.includes(topic);
-          });
+          const hasTopicMatch = selectedPreferredModuleId && String(m.id) === selectedPreferredModuleId;
           if (hasTopicMatch) {
             score += 10;
             reasons.push("Topic Match");
           }
 
-          // Difficulty level match ( Beginner: order 1-2, Intermediate: order 3, Advanced: order 4+ )
-          let mDiff = "beginner";
-          if (m.order_no >= 4 || m.unlock_points > 100) {
-            mDiff = "advanced";
-          } else if (m.order_no === 3 || m.unlock_points >= 50) {
-            mDiff = "intermediate";
+          // Determine active difficulty for this student based on available question difficulties in this module
+          const avail = m.difficulties || ["beginner"];
+          const preferredDifficulty = modulePreferenceMap[String(m.id)] || "beginner";
+          let mDiff = preferredDifficulty;
+          if (avail.length && !avail.includes(preferredDifficulty)) {
+            mDiff = avail[0] || "beginner";
           }
 
-          if (mDiff === difficulty) {
+          if (mDiff === preferredDifficulty) {
             score += 5;
-            reasons.push(`${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Level`);
+            reasons.push(`${preferredDifficulty.charAt(0).toUpperCase() + preferredDifficulty.slice(1)} Level`);
+          } else {
+            reasons.push(`${mDiff.charAt(0).toUpperCase() + mDiff.slice(1)} Level`);
           }
 
-          return { ...m, score, reasons };
+          return { ...m, score, reasons, difficulty: mDiff };
         });
 
         // Sort: Unlocked first, then by score descending (recommended first), then by order
@@ -110,8 +121,27 @@
         });
 
         container.innerHTML = scoredModules.map(m => {
+          let diffIcon = "🟢";
+          let diffColorBg = "rgba(34, 197, 94, 0.15)";
+          let diffColorBorder = "rgba(34, 197, 94, 0.3)";
+          let diffColorText = "#15803d";
+          
+          if (m.difficulty === "intermediate") {
+            diffIcon = "🟡";
+            diffColorBg = "rgba(234, 179, 8, 0.15)";
+            diffColorBorder = "rgba(234, 179, 8, 0.3)";
+            diffColorText = "#a16207";
+          } else if (m.difficulty === "advanced") {
+            diffIcon = "🔴";
+            diffColorBg = "rgba(239, 68, 68, 0.15)";
+            diffColorBorder = "rgba(239, 68, 68, 0.3)";
+            diffColorText = "#b91c1c";
+          }
+
+          const diffBadge = `<span class="chip" style="background: ${diffColorBg}; border: 2px solid ${diffColorBorder}; color: ${diffColorText}; font-size: 11px; margin-left: 8px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">${diffIcon} ${m.difficulty.charAt(0).toUpperCase() + m.difficulty.slice(1)}</span>`;
+
           const recBadge = m.reasons.length > 0
-            ? `<span class="chip" style="background: rgba(251, 191, 36, 0.15); border: 2px solid rgba(251, 191, 36, 0.3); color: #b45309; font-size: 11px; margin-left: 8px; font-weight: 800;">⭐ Recommended (${m.reasons.join(", ")})</span>`
+            ? `<span class="chip" style="background: rgba(251, 191, 36, 0.15); border: 2px solid rgba(251, 191, 36, 0.3); color: #b45309; font-size: 11px; margin-left: 8px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">⭐ Recommended (${m.reasons.join(", ")})</span>`
             : "";
 
           const borderStyle = m.score > 0 ? `style="border-left: 6px solid #fbbf24;"` : "";
@@ -122,6 +152,7 @@
                 <div>
                   <div class="post-title" style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
                     ${m.title}
+                    ${diffBadge}
                     ${recBadge}
                   </div>
                   <div class="muted small">${m.description || ""}</div>
